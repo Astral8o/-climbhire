@@ -1,5 +1,3 @@
-export const runtime = "edge";
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -10,17 +8,13 @@ import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import { COMPANIES, JOBS } from "@/lib/data";
 import { ArrowLeft, MapPin, Users, Check, ArrowUpRight } from "lucide-react";
-
 export function generateStaticParams() {
   return COMPANIES.map((c) => ({ id: c.id }));
 }
-
 export default function CompanyProfilePage({ params }: { params: { id: string } }) {
   const company = COMPANIES.find((c) => c.id === params.id);
   if (!company) notFound();
-
   const companyJobs = JOBS.filter((j) => j.company === company.name);
-
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -32,7 +26,6 @@ export default function CompanyProfilePage({ params }: { params: { id: string } 
           >
             <ArrowLeft size={13} /> All companies
           </Link>
-
           {/* Company hero card */}
           <div
             className="bg-white border-2 border-ink rounded-squircle p-8 mb-6"
@@ -70,7 +63,6 @@ export default function CompanyProfilePage({ params }: { params: { id: string } 
               </div>
             </div>
           </div>
-
           <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 300px" }}>
             {/* Open roles */}
             <div>
@@ -107,7 +99,6 @@ export default function CompanyProfilePage({ params }: { params: { id: string } 
                 ))}
               </div>
             </div>
-
             {/* Sidebar */}
             <div className="flex flex-col gap-4">
               {/* Benefits */}
@@ -127,7 +118,6 @@ export default function CompanyProfilePage({ params }: { params: { id: string } 
                   ))}
                 </ul>
               </div>
-
               {/* Apply CTA */}
               <div
                 className="bg-ink text-white border border-ink rounded-squircle p-5"

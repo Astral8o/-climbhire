@@ -1,30 +1,24 @@
-export const runtime = "edge";
-
 import type { Metadata } from "next";
 import { Epilogue, Manrope, Cedarville_Cursive } from "next/font/google";
 import "./globals.css";
-
 const epilogue = Epilogue({
   subsets: ["latin"],
   variable: "--font-epilogue",
   weight: ["500", "600", "700", "800", "900"],
   display: "swap",
 });
-
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
   weight: ["400", "500", "700"],
   display: "swap",
 });
-
 const cedarville = Cedarville_Cursive({
   subsets: ["latin"],
   variable: "--font-cedarville",
   weight: "400",
   display: "swap",
 });
-
 export const metadata: Metadata = {
   title: "ClimbHire Caribbean — Free jobs for the Caribbean",
   description:
@@ -36,7 +30,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
-
 export default function RootLayout({
   children,
 }: {

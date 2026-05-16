@@ -1,5 +1,3 @@
-export const runtime = "edge";
-
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
@@ -25,9 +23,7 @@ import {
   X,
   Plus,
 } from "lucide-react";
-
 const FEATURED = FEATURED_JOB_IDS.map((id) => JOBS.find((j) => j.id === id)!).filter(Boolean);
-
 const TRUST_NAMES = [
   "Get Right Finance",
   "MyGG",
@@ -38,7 +34,6 @@ const TRUST_NAMES = [
   "Island Finance",
   "Republic Bank",
 ];
-
 const ASSIST_CONVERSATION = [
   {
     from: "bot",
@@ -61,7 +56,6 @@ const ASSIST_CONVERSATION = [
     text: "Sign in to ClimbHire, hit Apply on the job, and your application is sent directly to the employer's inbox. ClimbHire doesn't store your resume — only the employer receives it.",
   },
 ];
-
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -82,7 +76,6 @@ export default function HomePage() {
                   Now live across the Caribbean
                 </span>
               </div>
-
               <h1
                 className="font-display font-bold uppercase text-ink mb-9"
                 style={{
@@ -98,7 +91,6 @@ export default function HomePage() {
                   </Highlight>
                 </div>
               </h1>
-
               <p className="font-body font-medium text-xl leading-[1.45] max-w-[560px] mb-10 text-ink/75">
                 We{" "}
                 <Highlight color="#D4FF5E" delay={1.3}>
@@ -106,13 +98,11 @@ export default function HomePage() {
                 </Highlight>{" "}
                 opportunity. Connecting Caribbean job seekers to leading companies in the Caribbean &amp; beyond.
               </p>
-
               <div className="flex gap-3.5 flex-wrap">
                 <Button size="lg" href="/jobs">Find your next job</Button>
                 <Button size="lg" variant="secondary" href="/employers">Hire with us</Button>
               </div>
             </div>
-
             {/* Right — hero image */}
             <div className="relative aspect-[5/6] max-w-[520px] ml-auto w-full">
               <div
@@ -162,7 +152,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
         {/* ── TrustBar ── */}
         <section className="bg-ink border-b border-ink py-7 overflow-hidden relative">
           <div className="absolute left-6 top-1/2 -translate-y-1/2 bg-ink pr-3.5 z-10 flex items-center gap-2.5">
@@ -188,7 +177,6 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-
         {/* ── Featured Opportunities ── */}
         <section className="bg-cream border-b border-ink px-7 py-[108px]">
           <div className="max-w-[1360px] mx-auto">
@@ -214,7 +202,6 @@ export default function HomePage() {
                 </Tag>
               </div>
             </div>
-
             <div className="grid gap-10" style={{ gridTemplateColumns: "1fr 2fr" }}>
               {/* Companies column */}
               <div>
@@ -246,7 +233,6 @@ export default function HomePage() {
                 </div>
                 <Button variant="outline" block href="/companies">Explore all companies</Button>
               </div>
-
               {/* Jobs grid */}
               <div>
                 <Eyebrow color="dim" className="mb-4 block">
@@ -264,7 +250,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
         {/* ── Jobs Preview ── */}
         <section className="bg-white border-b border-ink px-7 py-[120px] relative overflow-hidden">
           <div className="max-w-[1360px] mx-auto">
@@ -316,7 +301,6 @@ export default function HomePage() {
                   <Button variant="ghost" href="/sign-up">Create free account</Button>
                 </div>
               </div>
-
               {/* Right — PanelChrome */}
               <PanelChrome
                 label="Find_Jobs::Live_Search"
@@ -401,7 +385,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
         {/* ── Assist Showcase ── */}
         <section className="bg-cream border-b border-ink px-7 py-[120px] relative overflow-hidden">
           <div className="max-w-[1360px] mx-auto">
@@ -430,7 +413,6 @@ export default function HomePage() {
                     </div>
                     <X size={14} strokeWidth={2} className="text-white/60" />
                   </div>
-
                   {/* Messages */}
                   <div className="p-5 bg-cream min-h-[340px] flex flex-col gap-3">
                     {ASSIST_CONVERSATION.map((m, i) => (
@@ -469,7 +451,6 @@ export default function HomePage() {
                       ))}
                     </div>
                   </div>
-
                   {/* Composer */}
                   <div className="px-4 py-3 bg-white border-t border-ink flex items-center gap-2.5">
                     <div className="flex-1 px-3.5 py-2.5 bg-cream border border-ink rounded-xl font-body text-xs text-ink/45">
@@ -481,7 +462,6 @@ export default function HomePage() {
                   </div>
                 </div>
               </PanelChrome>
-
               {/* Right copy */}
               <div>
                 <Eyebrow className="mb-4 block">§ 04 · ClimbHire Assist</Eyebrow>
@@ -535,7 +515,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
         {/* ── FAQ ── */}
         <section className="bg-white border-b border-ink px-7 py-[120px]">
           <div className="max-w-[980px] mx-auto">
@@ -558,7 +537,6 @@ export default function HomePage() {
             <FAQ />
           </div>
         </section>
-
         {/* ── Final CTA ── */}
         <section className="bg-ink px-7 py-[120px] relative overflow-hidden">
           <div
@@ -608,7 +586,6 @@ export default function HomePage() {
     </div>
   );
 }
-
 function JobCard({ job }: { job: (typeof JOBS)[number] }) {
   return (
     <Link

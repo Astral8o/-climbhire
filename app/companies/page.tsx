@@ -1,5 +1,3 @@
-export const runtime = "edge";
-
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,7 +8,6 @@ import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import { COMPANIES, JOBS } from "@/lib/data";
 import { ArrowUpRight, MapPin, Users } from "lucide-react";
-
 export default function CompaniesPage() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -38,7 +35,6 @@ export default function CompaniesPage() {
             </p>
           </div>
         </section>
-
         {/* Company grid */}
         <section className="px-7 py-12 pb-24">
           <div className="max-w-[1360px] mx-auto">
@@ -75,11 +71,9 @@ export default function CompaniesPage() {
                         {companyJobs.length} roles
                       </Tag>
                     </div>
-
                     <p className="font-body text-[13px] text-ink/65 leading-[1.5] mb-4 line-clamp-2">
                       {c.about}
                     </p>
-
                     <div className="flex items-center gap-4 text-[11px] font-body text-ink/50 mb-4">
                       <span className="flex items-center gap-1">
                         <MapPin size={11} /> {c.location}
@@ -88,7 +82,6 @@ export default function CompaniesPage() {
                         <Users size={11} /> {c.size}
                       </span>
                     </div>
-
                     <div className="flex items-center justify-between pt-4 border-t border-ink/10">
                       <div className="flex gap-1.5">
                         {c.benefits.slice(0, 2).map((b) => (
@@ -105,7 +98,6 @@ export default function CompaniesPage() {
                 );
               })}
             </div>
-
             {/* CTA for employers */}
             <div
               className="mt-12 bg-ink text-white border border-ink rounded-squircle p-8 flex items-center justify-between gap-6 flex-wrap"

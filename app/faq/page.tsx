@@ -1,12 +1,9 @@
-export const runtime = "edge";
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";
 import Eyebrow from "@/components/ui/Eyebrow";
 import Highlight from "@/components/ui/Highlight";
 import { Zap } from "lucide-react";
-
 export default function FAQPage() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -30,11 +27,9 @@ export default function FAQPage() {
             </h1>
           </div>
         </section>
-
         <section className="px-7 py-14 pb-24">
           <div className="max-w-[980px] mx-auto">
             <FAQ />
-
             {/* Assist CTA */}
             <div
               className="mt-10 bg-lime border border-ink rounded-squircle p-8 flex items-center justify-between gap-6 flex-wrap cursor-pointer hover:-translate-y-0.5 transition-transform"

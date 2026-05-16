@@ -1,7 +1,9 @@
-export const runtime = "edge";
-
-import { redirect } from "next/navigation";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ForProfessionalsPage() {
-  redirect("/jobs");
+  const router = useRouter();
+  useEffect(() => { router.replace("/jobs"); }, [router]);
+  return null;
 }

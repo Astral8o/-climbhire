@@ -1,11 +1,8 @@
-export const runtime = "edge";
-
-import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Eyebrow from "@/components/ui/Eyebrow";
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
+export default function ProfilePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />

@@ -1,5 +1,3 @@
-export const runtime = "edge";
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -19,19 +17,14 @@ import {
   Briefcase,
   Bookmark,
 } from "lucide-react";
-
 export function generateStaticParams() {
   return JOBS.map((j) => ({ id: j.id }));
 }
-
 export default function JobDetailPage({ params }: { params: { id: string } }) {
   const job = JOBS.find((j) => j.id === params.id);
   if (!job) notFound();
-
   const company = getCompanyByName(job.company);
-
   const descLines = (job.description ?? "").split("\n\n");
-
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -44,7 +37,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
           >
             <ArrowLeft size={13} /> Back to jobs
           </Link>
-
           {/* Main card */}
           <div
             className="bg-white border-2 border-ink rounded-squircle p-8 mb-6"
@@ -88,7 +80,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   </div>
                 </div>
               </div>
-
               <div className="flex gap-2.5 flex-shrink-0">
                 <button className="w-10 h-10 border border-ink rounded-[14px] flex items-center justify-center hover:bg-lime transition-colors">
                   <Bookmark size={16} />
@@ -98,7 +89,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 </Button>
               </div>
             </div>
-
             {/* Tags row */}
             <div className="flex gap-1.5 flex-wrap pt-5 border-t border-ink/10">
               {job.tags.map((t) => (
@@ -108,7 +98,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               ))}
             </div>
           </div>
-
           {/* Body — 2 col */}
           <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 340px" }}>
             {/* Left — description */}
@@ -145,7 +134,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   return <p key={i}>{para}</p>;
                 })}
               </div>
-
               {/* Tags */}
               <div className="mt-8 pt-6 border-t border-ink/10">
                 <Eyebrow color="dim" className="block mb-3">
@@ -160,7 +148,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 </div>
               </div>
             </div>
-
             {/* Right sidebar */}
             <div className="flex flex-col gap-4">
               {/* At a glance */}
@@ -189,7 +176,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     </div>
                   ))}
                 </dl>
-
                 <div className="mt-6 pt-5 border-t border-ink/10 flex flex-col gap-2.5">
                   <Button block href="/sign-in" size="md">
                     Apply Now
@@ -199,7 +185,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   </button>
                 </div>
               </div>
-
               {/* Company card */}
               <Link
                 href={`/companies/${company.id}`}

@@ -1,8 +1,5 @@
-export const runtime = "edge";
-
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-
 export default function AdminPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-cream p-8">
