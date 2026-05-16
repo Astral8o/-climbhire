@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FAQ from "@/components/FAQ";

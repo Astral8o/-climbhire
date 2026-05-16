@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import type { Metadata } from "next";
 import { Epilogue, Manrope, Cedarville_Cursive } from "next/font/google";
 import "./globals.css";
