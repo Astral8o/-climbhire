@@ -8,7 +8,7 @@ import Eyebrow from "@/components/ui/Eyebrow";
 import Highlight from "@/components/ui/Highlight";
 import Tag from "@/components/ui/Tag";
 import { JOBS } from "@/lib/data";
-import { getSupabaseClient } from "@/lib/supabase";
+import { getSupabaseClient, formatSalary, formatExpiry, formatPosted, type DbJob } from "@/lib/supabase";
 import {
   ArrowUpRight,
   Bookmark,
@@ -35,25 +35,23 @@ type Job = {
   is_featured: boolean;
 };
 
-function toJob(raw: Record<string, unknown>): Job {
+function dbToJob(raw: DbJob): Job {
   return {
-    id: String(raw.id ?? ""),
-    title: String(raw.title ?? ""),
-    company: String(raw.company ?? ""),
-    location: String(raw.location ?? ""),
-    type: String(raw.type ?? "full-time"),
-    level: String(raw.level ?? "Mid-level"),
-    salary: String(raw.salary ?? "Competitive"),
-    description: String(raw.description ?? ""),
-    tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
-    remote: Boolean(raw.remote),
-    posted: String(raw.posted ?? ""),
-    closing: String(raw.closing ?? ""),
-    apply_url: String(raw.apply_url ?? ""),
-    category: Array.isArray(raw.tags) && (raw.tags as string[]).length > 0
-      ? String((raw.tags as string[])[0])
-      : "General",
-    is_featured: Boolean(raw.is_featured),
+    id: raw.id,
+    title: raw.title,
+    company: raw.companies?.name ?? "Unknown",
+    location: raw.location,
+    type: raw.employment_type ?? "full-time",
+    level: "Mid-level",
+    salary: formatSalary(raw),
+    description: raw.summary ?? "",
+    tags: raw.tags ?? [],
+    remote: raw.work_mode === "remote" || raw.work_mode === "hybrid",
+    posted: formatPosted(raw.published_at),
+    closing: formatExpiry(raw.expires_at),
+    apply_url: raw.apply_url ?? "",
+    category: raw.industry ?? (raw.tags?.[0] ?? "General"),
+    is_featured: raw.is_urgent ?? false,
   };
 }
 
@@ -170,11 +168,12 @@ export default function FindJobsPage() {
         const supabase = getSupabaseClient();
         const { data, error } = await supabase
           .from("jobs")
-          .select("*")
-          .order("created_at", { ascending: false });
+          .select("*, companies(name, slug, logo_url, industry)")
+          .eq("status", "published")
+          .order("published_at", { ascending: false });
 
         if (!error && data && data.length > 0) {
-          setJobs(data.map((j) => toJob(j as Record<string, unknown>)));
+          setJobs(data.map((j) => dbToJob(j as unknown as DbJob)));
         }
       } catch {
         // keep fallback data
