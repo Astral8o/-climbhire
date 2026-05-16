@@ -1,17 +1,20 @@
 """
-ClimbHire Caribbean — Google Jobs scraper
-Scrapes Caribbean job listings and writes them to Supabase.
+ClimbHire Caribbean — Google Jobs scraper via SerpAPI
+Pulls real Caribbean job listings and writes them into Supabase.
 
 Setup:
   pip install requests supabase
 
-Usage:
-  python scrape_jobs.py
+Run:
+  python scraper/scrape_jobs.py
 """
 
 import requests
-import os
+import time
+import re
 from supabase import create_client
+
+SERPAPI_KEY = "bb2bf9dbf29dc5c8a72bf9b7867164e35409c476"
 
 SUPABASE_URL = "https://lvvfclktjcghqxauohli.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dmZjbGt0amNnaHF4YXVvaGxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDkyNDksImV4cCI6MjA4OTYyNTI0OX0.NzmpYGJyAMw9_ucjp_nSJocBcN91Oj2hwQhC7zHGdR8"
@@ -23,231 +26,273 @@ QUERIES = [
     "jobs in Guyana",
     "jobs in Bahamas",
     "jobs in Saint Lucia",
+    "jobs in Grenada",
+    "jobs in Antigua",
     "remote jobs Caribbean",
     "finance jobs Trinidad",
     "tech jobs Trinidad",
+    "engineering jobs Trinidad",
     "marketing jobs Jamaica",
+    "accounting jobs Barbados",
+    "healthcare jobs Trinidad",
+    "management jobs Caribbean",
 ]
 
-def scrape_google_jobs(query: str) -> list[dict]:
-    """Scrape Google Jobs for a query using SerpAPI-compatible free approach."""
-    url = "https://www.googleapis.com/customsearch/v1"
-    # Using direct Google Jobs search URL scrape
-    search_url = f"https://www.google.com/search?q={requests.utils.quote(query)}&ibp=htl;jobs&hl=en"
+INDUSTRY_MAP = {
+    "engineer": "Technology", "developer": "Technology", "software": "Technology",
+    "data": "Technology", "it ": "Technology", "tech": "Technology", "network": "Technology",
+    "finance": "Banking & Finance", "financial": "Banking & Finance", "accountant": "Banking & Finance",
+    "accounting": "Banking & Finance", "bank": "Banking & Finance", "analyst": "Banking & Finance",
+    "audit": "Banking & Finance", "actuari": "Banking & Finance",
+    "market": "Marketing", "brand": "Marketing", "digital": "Marketing", "content": "Marketing",
+    "sales": "Sales", "business development": "Sales",
+    "hr": "Human Resources", "human resource": "Human Resources", "talent": "Human Resources",
+    "recruit": "Human Resources", "people": "Human Resources",
+    "health": "Healthcare", "nurse": "Healthcare", "doctor": "Healthcare", "medical": "Healthcare",
+    "pharmacist": "Healthcare", "clinical": "Healthcare",
+    "legal": "Legal", "lawyer": "Legal", "attorney": "Legal", "compliance": "Legal",
+    "project manager": "Management", "operations": "Management", "manager": "Management",
+    "director": "Management", "executive": "Management",
+    "teacher": "Education", "education": "Education", "lecturer": "Education",
+    "design": "Design", "ux": "Design", "ui": "Design", "graphic": "Design",
+    "logistic": "Logistics", "supply chain": "Logistics", "procurement": "Logistics",
+    "energy": "Energy", "oil": "Energy", "gas": "Energy", "petroleum": "Energy",
+}
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+def guess_industry(title: str) -> str:
+    t = title.lower()
+    for keyword, industry in INDUSTRY_MAP.items():
+        if keyword in t:
+            return industry
+    return "General"
+
+
+def guess_level(title: str, description: str = "") -> str:
+    text = (title + " " + description).lower()
+    if any(w in text for w in ["senior", "sr.", "lead", "principal", "head of", "director", "vp ", "chief"]):
+        return "Senior"
+    if any(w in text for w in ["junior", "jr.", "entry", "graduate", "intern", "trainee"]):
+        return "Entry-level"
+    return "Mid-level"
+
+
+def parse_salary(job: dict) -> tuple[int, int, str, str]:
+    """Extract salary_min, salary_max, currency, period from SerpAPI job."""
+    detected = job.get("detected_extensions", {})
+    salary_str = detected.get("salary", "") or ""
+
+    # Try structured salary first
+    if not salary_str:
+        for ext in job.get("extensions", []):
+            if any(c in ext for c in ["$", "€", "£", "TTD", "JMD", "BBD", "USD"]):
+                salary_str = ext
+                break
+
+    if not salary_str:
+        return 0, 0, "USD", "yearly"
+
+    # Detect currency
+    currency = "USD"
+    if "TTD" in salary_str:
+        currency = "TTD"
+    elif "JMD" in salary_str:
+        currency = "JMD"
+    elif "BBD" in salary_str:
+        currency = "BBD"
+    elif "GYD" in salary_str:
+        currency = "GYD"
+    elif "XCD" in salary_str:
+        currency = "XCD"
+
+    # Detect period
+    period = "yearly"
+    low = salary_str.lower()
+    if any(w in low for w in ["month", "/mo", "per month"]):
+        period = "monthly"
+    elif any(w in low for w in ["hour", "/hr", "per hour"]):
+        period = "hourly"
+
+    # Extract numbers
+    nums = re.findall(r"[\d,]+(?:\.\d+)?", salary_str.replace(",", ""))
+    nums = [int(float(n)) for n in nums if n]
+
+    if len(nums) >= 2:
+        return min(nums), max(nums), currency, period
+    if len(nums) == 1:
+        return nums[0], nums[0], currency, period
+
+    return 0, 0, currency, period
+
+
+def parse_work_mode(job: dict) -> str:
+    detected = job.get("detected_extensions", {})
+    schedule = (detected.get("work_from_home", False))
+    if schedule:
+        return "remote"
+    title_desc = (job.get("title", "") + job.get("description", "")).lower()
+    if "remote" in title_desc:
+        return "remote"
+    if "hybrid" in title_desc:
+        return "hybrid"
+    return "on-site"
+
+
+def parse_employment_type(job: dict) -> str:
+    detected = job.get("detected_extensions", {})
+    sched = (detected.get("schedule_type", "") or "").lower()
+    if "part" in sched:
+        return "part-time"
+    if "contract" in sched:
+        return "contract"
+    if "intern" in sched:
+        return "internship"
+    return "full-time"
+
+
+def get_apply_url(job: dict) -> str:
+    options = job.get("apply_options", [])
+    if options:
+        return options[0].get("link", "")
+    return job.get("share_link", "")
+
+
+def extract_tags(title: str, description: str) -> list[str]:
+    """Pull likely skill tags from title and description."""
+    tag_keywords = [
+        "Python", "Java", "SQL", "Excel", "Power BI", "Tableau", "Figma",
+        "React", "JavaScript", "TypeScript", "AWS", "Azure", "GCP",
+        "QuickBooks", "SAP", "Salesforce", "HubSpot", "Google Ads",
+        "PMP", "Agile", "Scrum", "ACCA", "CPA", "CFA",
+        "AutoCAD", "MATLAB", "Cisco", "Linux",
+        "HR", "Payroll", "Recruitment", "Training",
+        "Marketing", "Finance", "Accounting", "Legal", "Compliance",
+    ]
+    text = title + " " + (description[:500] if description else "")
+    found = [t for t in tag_keywords if t.lower() in text.lower()]
+    # Always add the industry as a tag
+    found.append(guess_industry(title))
+    return list(dict.fromkeys(found))[:8]  # dedupe, max 8
+
+
+def get_or_create_company(supabase, company_name: str) -> str | None:
+    """Return company ID, creating the company if it doesn't exist."""
+    if not company_name:
+        return None
+
+    slug = re.sub(r"[^a-z0-9]+", "-", company_name.lower()).strip("-")
+
+    # Try to find existing
+    result = supabase.table("companies").select("id").eq("slug", slug).execute()
+    if result.data:
+        return result.data[0]["id"]
+
+    # Create new
+    new_co = supabase.table("companies").insert({
+        "name": company_name,
+        "slug": slug,
+        "industry": "General",
+        "tier": "free",
+        "is_hiring_partner": False,
+    }).execute()
+
+    if new_co.data:
+        return new_co.data[0]["id"]
+    return None
+
+
+def job_exists(supabase, slug: str) -> bool:
+    result = supabase.table("jobs").select("id").eq("slug", slug).execute()
+    return bool(result.data)
+
+
+def scrape_query(query: str) -> list[dict]:
+    """Fetch jobs from SerpAPI for one query."""
+    params = {
+        "engine": "google_jobs",
+        "q": query,
+        "api_key": SERPAPI_KEY,
+        "hl": "en",
+        "num": 10,
     }
 
     try:
-        response = requests.get(search_url, headers=headers, timeout=10)
-        # Basic parsing — for production use SerpAPI or Oxylabs
-        jobs = []
-        # Placeholder: returns empty list until real scraper is wired in
-        # See README for integration with Oxylabs or SerpAPI
-        return jobs
+        resp = requests.get("https://serpapi.com/search", params=params, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("jobs_results", [])
     except Exception as e:
-        print(f"Error scraping '{query}': {e}")
+        print(f"  SerpAPI error for '{query}': {e}")
         return []
 
 
-def insert_jobs(jobs: list[dict]):
-    """Insert scraped jobs into Supabase, skipping duplicates."""
-    if not jobs:
-        return
+def insert_job(supabase, job: dict, company_id: str) -> bool:
+    title = job.get("title", "").strip()
+    company_name = job.get("company_name", "").strip()
+    slug_base = re.sub(r"[^a-z0-9]+", "-", (title + "-" + company_name).lower()).strip("-")
+    slug = slug_base[:80]
 
+    if job_exists(supabase, slug):
+        return False
+
+    salary_min, salary_max, currency, period = parse_salary(job)
+    description = job.get("description", "")
+    tags = extract_tags(title, description)
+
+    try:
+        supabase.table("jobs").insert({
+            "company_id": company_id,
+            "title": title,
+            "slug": slug,
+            "summary": description[:600] if description else "",
+            "employment_type": parse_employment_type(job),
+            "work_mode": parse_work_mode(job),
+            "location": job.get("location", "Caribbean"),
+            "industry": guess_industry(title),
+            "tags": tags,
+            "salary_min": salary_min,
+            "salary_max": salary_max,
+            "salary_currency": currency,
+            "salary_period": period,
+            "apply_url": get_apply_url(job),
+            "status": "published",
+            "published_at": "now()",
+            "expires_at": "now() + interval '60 days'",
+        }).execute()
+        return True
+    except Exception as e:
+        print(f"    Insert error: {e}")
+        return False
+
+
+def main():
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    total_inserted = 0
 
-    for job in jobs:
-        try:
-            # Check for duplicate by title + company
-            existing = supabase.table("jobs")\
-                .select("id")\
-                .eq("title", job["title"])\
-                .eq("company", job["company"])\
-                .execute()
+    for query in QUERIES:
+        print(f"\nScraping: '{query}'")
+        jobs = scrape_query(query)
+        print(f"  Found {len(jobs)} listings")
 
-            if existing.data:
-                print(f"  Skip (exists): {job['title']} @ {job['company']}")
+        for job in jobs:
+            company_name = job.get("company_name", "").strip()
+            if not company_name:
                 continue
 
-            supabase.table("jobs").insert(job).execute()
-            print(f"  Inserted: {job['title']} @ {job['company']}")
-        except Exception as e:
-            print(f"  Error inserting {job.get('title', '?')}: {e}")
+            company_id = get_or_create_company(supabase, company_name)
+            if not company_id:
+                continue
 
+            inserted = insert_job(supabase, job, company_id)
+            status = "+" if inserted else "~"
+            print(f"  [{status}] {job.get('title')} @ {company_name}")
+            if inserted:
+                total_inserted += 1
 
-def seed_sample_jobs():
-    """Insert a set of real-looking Caribbean jobs to seed the database."""
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # Be polite — don't hammer SerpAPI
+        time.sleep(1)
 
-    sample_jobs = [
-        {
-            "title": "Financial Analyst",
-            "company": "Republic Bank",
-            "location": "Port of Spain, Trinidad",
-            "type": "full-time",
-            "level": "Mid-level",
-            "salary": "TTD 8,000–12,000/mo",
-            "description": "Analyze financial data, prepare reports, and support strategic decision-making for one of the Caribbean's leading banks.",
-            "tags": ["Finance", "Excel", "Reporting", "Banking"],
-            "remote": False,
-            "posted": "2 days ago",
-            "closing": "June 15, 2026",
-            "apply_url": "https://republicbank.com/careers",
-            "source": "seed",
-            "is_featured": True,
-        },
-        {
-            "title": "Software Engineer",
-            "company": "Digicel Group",
-            "location": "Kingston, Jamaica",
-            "type": "full-time",
-            "level": "Mid-level",
-            "salary": "USD 50,000–70,000/yr",
-            "description": "Build and maintain scalable backend services for Digicel's digital products across the Caribbean region.",
-            "tags": ["Python", "AWS", "REST APIs", "PostgreSQL"],
-            "remote": True,
-            "posted": "1 week ago",
-            "closing": "June 30, 2026",
-            "apply_url": "https://digicelgroup.com/careers",
-            "source": "seed",
-            "is_featured": True,
-        },
-        {
-            "title": "Marketing Manager",
-            "company": "Massy Stores",
-            "location": "San Fernando, Trinidad",
-            "type": "full-time",
-            "level": "Senior",
-            "salary": "TTD 15,000–20,000/mo",
-            "description": "Lead marketing campaigns across digital and traditional channels for the Caribbean's largest retail group.",
-            "tags": ["Marketing", "Digital", "Brand", "Retail"],
-            "remote": False,
-            "posted": "3 days ago",
-            "closing": "June 20, 2026",
-            "apply_url": "https://massystores.com/careers",
-            "source": "seed",
-            "is_featured": False,
-        },
-        {
-            "title": "UX Designer",
-            "company": "JMMB Group",
-            "location": "Kingston, Jamaica",
-            "type": "full-time",
-            "level": "Mid-level",
-            "salary": "USD 40,000–55,000/yr",
-            "description": "Design intuitive digital experiences for JMMB's financial products used by hundreds of thousands of Caribbean customers.",
-            "tags": ["Figma", "UX Research", "Prototyping", "Finance"],
-            "remote": True,
-            "posted": "5 days ago",
-            "closing": "June 25, 2026",
-            "apply_url": "https://jmmb.com/careers",
-            "source": "seed",
-            "is_featured": False,
-        },
-        {
-            "title": "Network Engineer",
-            "company": "bmobile",
-            "location": "Port of Spain, Trinidad",
-            "type": "full-time",
-            "level": "Senior",
-            "salary": "TTD 18,000–24,000/mo",
-            "description": "Design and maintain bmobile's LTE and 5G network infrastructure across Trinidad and Tobago.",
-            "tags": ["Networking", "LTE", "Cisco", "Telecoms"],
-            "remote": False,
-            "posted": "1 week ago",
-            "closing": "June 18, 2026",
-            "apply_url": "https://bmobile.co.tt/careers",
-            "source": "seed",
-            "is_featured": False,
-        },
-        {
-            "title": "Data Analyst",
-            "company": "Guardian Group",
-            "location": "Port of Spain, Trinidad",
-            "type": "full-time",
-            "level": "Entry-level",
-            "salary": "TTD 6,000–9,000/mo",
-            "description": "Support the actuarial and business intelligence teams with data modelling, dashboards, and ad-hoc analysis.",
-            "tags": ["SQL", "Power BI", "Python", "Insurance"],
-            "remote": False,
-            "posted": "2 weeks ago",
-            "closing": "June 10, 2026",
-            "apply_url": "https://guardiangroup.com/careers",
-            "source": "seed",
-            "is_featured": False,
-        },
-        {
-            "title": "HR Business Partner",
-            "company": "Sagicor Financial",
-            "location": "Bridgetown, Barbados",
-            "type": "full-time",
-            "level": "Senior",
-            "salary": "BBD 70,000–90,000/yr",
-            "description": "Partner with business leaders to develop people strategies that support Sagicor's growth across the Caribbean.",
-            "tags": ["HR", "Talent", "Strategy", "Finance"],
-            "remote": False,
-            "posted": "4 days ago",
-            "closing": "June 22, 2026",
-            "apply_url": "https://sagicor.com/careers",
-            "source": "seed",
-            "is_featured": False,
-        },
-        {
-            "title": "Frontend Developer",
-            "company": "Flow Caribbean",
-            "location": "Remote — Caribbean",
-            "type": "full-time",
-            "level": "Mid-level",
-            "salary": "USD 45,000–60,000/yr",
-            "description": "Build responsive web and mobile interfaces for Flow's customer-facing products across 17 Caribbean markets.",
-            "tags": ["React", "TypeScript", "CSS", "Mobile"],
-            "remote": True,
-            "posted": "3 days ago",
-            "closing": "June 28, 2026",
-            "apply_url": "https://discoveryflow.com/careers",
-            "source": "seed",
-            "is_featured": True,
-        },
-        {
-            "title": "Accountant",
-            "company": "PriceSmart Trinidad",
-            "location": "Chaguanas, Trinidad",
-            "type": "full-time",
-            "level": "Mid-level",
-            "salary": "TTD 7,000–10,000/mo",
-            "description": "Manage accounts payable/receivable, payroll, and monthly financial reporting for PriceSmart's Trinidad operations.",
-            "tags": ["Accounting", "QuickBooks", "Payroll", "Retail"],
-            "remote": False,
-            "posted": "1 week ago",
-            "closing": "June 16, 2026",
-            "apply_url": "https://pricesmart.com/careers",
-            "source": "seed",
-            "is_featured": False,
-        },
-        {
-            "title": "Project Manager",
-            "company": "National Gas Company of T&T",
-            "location": "Point Lisas, Trinidad",
-            "type": "full-time",
-            "level": "Senior",
-            "salary": "TTD 22,000–30,000/mo",
-            "description": "Lead cross-functional engineering and construction projects for NGC's natural gas infrastructure expansion.",
-            "tags": ["Project Management", "PMP", "Engineering", "Energy"],
-            "remote": False,
-            "posted": "6 days ago",
-            "closing": "June 30, 2026",
-            "apply_url": "https://ngc.co.tt/careers",
-            "source": "seed",
-            "is_featured": False,
-        },
-    ]
-
-    print(f"Seeding {len(sample_jobs)} Caribbean jobs...")
-    insert_jobs(sample_jobs)
-    print("Done.")
+    print(f"\nDone. {total_inserted} new jobs added to Supabase.")
 
 
 if __name__ == "__main__":
-    seed_sample_jobs()
+    main()
