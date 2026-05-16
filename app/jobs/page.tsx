@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Eyebrow from "@/components/ui/Eyebrow";
 import Highlight from "@/components/ui/Highlight";
 import Tag from "@/components/ui/Tag";
-import Avatar from "@/components/ui/Avatar";
-import { JOBS, getCompanyByName } from "@/lib/data";
+import { JOBS } from "@/lib/data";
+import { getSupabaseClient } from "@/lib/supabase";
 import {
   ArrowUpRight,
   Bookmark,
@@ -17,11 +17,45 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-type Job = (typeof JOBS)[number];
+type Job = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  type: string;
+  level: string;
+  salary: string;
+  description: string;
+  tags: string[];
+  remote: boolean;
+  posted: string;
+  closing: string;
+  apply_url: string;
+  category: string;
+  is_featured: boolean;
+};
 
-const CATEGORIES = Array.from(new Set(JOBS.map((j) => j.category)));
-const TYPES = Array.from(new Set(JOBS.map((j) => j.type)));
-const LEVELS = Array.from(new Set(JOBS.map((j) => j.level)));
+function toJob(raw: Record<string, unknown>): Job {
+  return {
+    id: String(raw.id ?? ""),
+    title: String(raw.title ?? ""),
+    company: String(raw.company ?? ""),
+    location: String(raw.location ?? ""),
+    type: String(raw.type ?? "full-time"),
+    level: String(raw.level ?? "Mid-level"),
+    salary: String(raw.salary ?? "Competitive"),
+    description: String(raw.description ?? ""),
+    tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
+    remote: Boolean(raw.remote),
+    posted: String(raw.posted ?? ""),
+    closing: String(raw.closing ?? ""),
+    apply_url: String(raw.apply_url ?? ""),
+    category: Array.isArray(raw.tags) && (raw.tags as string[]).length > 0
+      ? String((raw.tags as string[])[0])
+      : "General",
+    is_featured: Boolean(raw.is_featured),
+  };
+}
 
 function FilterPills({
   label,
@@ -65,15 +99,9 @@ function JobCard({ job, saved, onSave }: { job: Job; saved: boolean; onSave: () 
       style={{ boxShadow: "3px 3px 0 0 #1C1C18" }}
     >
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onSave();
-        }}
+        onClick={(e) => { e.stopPropagation(); onSave(); }}
         className="absolute top-3.5 right-3.5 w-[34px] h-[34px] rounded-xl border border-ink flex items-center justify-center cursor-pointer transition-all duration-200"
-        style={{
-          background: saved ? "#D4FF5E" : "#fff",
-          color: saved ? "#1C1C18" : "rgba(28,28,24,0.35)",
-        }}
+        style={{ background: saved ? "#D4FF5E" : "#fff", color: saved ? "#1C1C18" : "rgba(28,28,24,0.35)" }}
       >
         <Bookmark size={14} fill={saved ? "currentColor" : "none"} />
       </button>
@@ -97,17 +125,9 @@ function JobCard({ job, saved, onSave }: { job: Job; saved: boolean; onSave: () 
       </p>
 
       <div className="flex gap-1.5 mb-4 flex-wrap">
-        <Tag tone="cream" className="text-[9px] px-2.5 py-1">
-          {job.type}
-        </Tag>
-        <Tag tone="cream" className="text-[9px] px-2.5 py-1">
-          {job.level}
-        </Tag>
-        {job.remote && (
-          <Tag tone="tealfaint" className="text-[9px] px-2.5 py-1">
-            Remote
-          </Tag>
-        )}
+        <Tag tone="cream" className="text-[9px] px-2.5 py-1">{job.type}</Tag>
+        <Tag tone="cream" className="text-[9px] px-2.5 py-1">{job.level}</Tag>
+        {job.remote && <Tag tone="tealfaint" className="text-[9px] px-2.5 py-1">Remote</Tag>}
       </div>
 
       <div className="flex justify-between items-center pt-3.5 border-t border-ink/8 mb-3.5">
@@ -127,44 +147,66 @@ function JobCard({ job, saved, onSave }: { job: Job; saved: boolean; onSave: () 
   );
 }
 
+const FALLBACK_JOBS: Job[] = JOBS.map((j) => ({
+  ...j,
+  description: j.description ?? "",
+  apply_url: `/jobs/${j.id}`,
+  is_featured: false,
+}));
+
 export default function FindJobsPage() {
+  const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS);
+  const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
-  const [activeCats, setActiveCats] = useState<string[]>([]);
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [activeLevels, setActiveLevels] = useState<string[]>([]);
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [saved, setSaved] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase
+          .from("jobs")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          setJobs(data.map((j) => toJob(j as Record<string, unknown>)));
+        }
+      } catch {
+        // keep fallback data
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchJobs();
+  }, []);
+
   const toggle = (arr: string[], setArr: (v: string[]) => void, v: string) =>
     setArr(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-  const activeCount =
-    activeCats.length + activeTypes.length + activeLevels.length + (remoteOnly ? 1 : 0);
+  const TYPES = Array.from(new Set(jobs.map((j) => j.type)));
+  const LEVELS = Array.from(new Set(jobs.map((j) => j.level)));
 
-  const filtered = JOBS.filter(
+  const activeCount = activeTypes.length + activeLevels.length + (remoteOnly ? 1 : 0);
+
+  const filtered = jobs.filter(
     (j) =>
-      (q === "" ||
-        (j.title + j.company + j.location).toLowerCase().includes(q.toLowerCase())) &&
-      (activeCats.length === 0 || activeCats.includes(j.category)) &&
+      (q === "" || (j.title + j.company + j.location).toLowerCase().includes(q.toLowerCase())) &&
       (activeTypes.length === 0 || activeTypes.includes(j.type)) &&
       (activeLevels.length === 0 || activeLevels.includes(j.level)) &&
       (!remoteOnly || j.remote)
   );
 
-  const reset = () => {
-    setActiveCats([]);
-    setActiveTypes([]);
-    setActiveLevels([]);
-    setRemoteOnly(false);
-    setQ("");
-  };
+  const reset = () => { setActiveTypes([]); setActiveLevels([]); setRemoteOnly(false); setQ(""); };
 
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1 bg-cream">
-        {/* Header */}
         <section className="px-7 pt-12 pb-6 border-b border-ink">
           <div className="max-w-[1360px] mx-auto">
             <div className="flex justify-between items-end gap-6 flex-wrap mb-6">
@@ -172,16 +214,10 @@ export default function FindJobsPage() {
                 <Eyebrow className="mb-2.5 block">§ Find jobs</Eyebrow>
                 <h1
                   className="font-display font-bold uppercase text-ink m-0"
-                  style={{
-                    fontSize: "clamp(40px, 5.5vw, 76px)",
-                    letterSpacing: "-0.05em",
-                    lineHeight: 0.95,
-                  }}
+                  style={{ fontSize: "clamp(40px, 5.5vw, 76px)", letterSpacing: "-0.05em", lineHeight: 0.95 }}
                 >
-                  {filtered.length} ways to{" "}
-                  <Highlight color="#D4FF5E" delay={0}>
-                    climb.
-                  </Highlight>
+                  {loading ? "Loading" : filtered.length} ways to{" "}
+                  <Highlight color="#D4FF5E" delay={0}>climb.</Highlight>
                 </h1>
               </div>
 
@@ -199,17 +235,10 @@ export default function FindJobsPage() {
                 <button
                   onClick={() => setFiltersOpen(!filtersOpen)}
                   className="inline-flex items-center gap-2 px-4 py-2.5 border border-ink rounded-[18px] font-body font-bold text-[11px] uppercase tracking-[0.12em] cursor-pointer transition-all"
-                  style={{
-                    background: activeCount > 0 ? "#1C1C18" : "#fff",
-                    color: activeCount > 0 ? "#fff" : "#1C1C18",
-                  }}
+                  style={{ background: activeCount > 0 ? "#1C1C18" : "#fff", color: activeCount > 0 ? "#fff" : "#1C1C18" }}
                 >
                   <Filter size={13} /> Filters{" "}
-                  {activeCount > 0 && (
-                    <span className="bg-lime text-ink rounded-full px-1.5 py-0.5 text-[9px]">
-                      {activeCount}
-                    </span>
-                  )}
+                  {activeCount > 0 && <span className="bg-lime text-ink rounded-full px-1.5 py-0.5 text-[9px]">{activeCount}</span>}
                 </button>
 
                 <div className="relative">
@@ -224,110 +253,47 @@ export default function FindJobsPage() {
             </div>
 
             {filtersOpen && (
-              <div
-                className="bg-white border border-ink rounded-[24px] p-5 grid gap-6 items-start mt-4"
-                style={{ gridTemplateColumns: "auto 1fr 1fr 1fr auto" }}
-              >
+              <div className="bg-white border border-ink rounded-[24px] p-5 grid gap-6 items-start mt-4" style={{ gridTemplateColumns: "auto 1fr 1fr auto" }}>
                 <div>
-                  <Eyebrow color="dim" className="block mb-2.5">
-                    Remote
-                  </Eyebrow>
+                  <Eyebrow color="dim" className="block mb-2.5">Remote</Eyebrow>
                   <label className="flex items-center gap-2.5 cursor-pointer font-body text-[13px]">
                     <span
                       onClick={() => setRemoteOnly(!remoteOnly)}
                       className="relative w-9 h-5 rounded-full border border-ink transition-all duration-200 flex-shrink-0 cursor-pointer"
                       style={{ background: remoteOnly ? "#D4FF5E" : "#fff" }}
                     >
-                      <span
-                        className="absolute top-0.5 w-3.5 h-3.5 rounded-full bg-ink transition-all duration-200"
-                        style={{ left: remoteOnly ? "18px" : "2px" }}
-                      />
+                      <span className="absolute top-0.5 w-3.5 h-3.5 rounded-full bg-ink transition-all duration-200" style={{ left: remoteOnly ? "18px" : "2px" }} />
                     </span>
                     Remote-only
                   </label>
                 </div>
-                <FilterPills
-                  label="Category"
-                  items={CATEGORIES}
-                  active={activeCats}
-                  onToggle={(v) => toggle(activeCats, setActiveCats, v)}
-                />
-                <FilterPills
-                  label="Type"
-                  items={TYPES}
-                  active={activeTypes}
-                  onToggle={(v) => toggle(activeTypes, setActiveTypes, v)}
-                />
-                <FilterPills
-                  label="Level"
-                  items={LEVELS}
-                  active={activeLevels}
-                  onToggle={(v) => toggle(activeLevels, setActiveLevels, v)}
-                />
+                <FilterPills label="Type" items={TYPES} active={activeTypes} onToggle={(v) => toggle(activeTypes, setActiveTypes, v)} />
+                <FilterPills label="Level" items={LEVELS} active={activeLevels} onToggle={(v) => toggle(activeLevels, setActiveLevels, v)} />
                 {activeCount > 0 && (
-                  <button
-                    onClick={reset}
-                    className="px-3.5 py-2 border border-ink rounded-2xl bg-transparent cursor-pointer font-body font-bold text-[10px] uppercase tracking-[0.12em] whitespace-nowrap self-end"
-                  >
+                  <button onClick={reset} className="px-3.5 py-2 border border-ink rounded-2xl bg-transparent cursor-pointer font-body font-bold text-[10px] uppercase tracking-[0.12em] whitespace-nowrap self-end">
                     Reset
                   </button>
                 )}
               </div>
             )}
-
-            {activeCount > 0 && !filtersOpen && (
-              <div className="flex gap-2 flex-wrap items-center mt-3">
-                <Eyebrow color="dim">Active</Eyebrow>
-                {[
-                  ...activeCats,
-                  ...activeTypes,
-                  ...activeLevels,
-                  ...(remoteOnly ? ["Remote"] : []),
-                ].map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-ink rounded-2xl bg-white font-body font-bold text-[10px] uppercase tracking-[0.1em]"
-                  >
-                    {t}
-                  </span>
-                ))}
-                <button
-                  onClick={reset}
-                  className="font-body font-bold text-[10px] uppercase tracking-[0.12em] text-teal bg-transparent border-0 cursor-pointer"
-                >
-                  Clear all
-                </button>
-              </div>
-            )}
           </div>
         </section>
 
-        {/* Results */}
         <section className="px-7 py-8 pb-24">
           <div className="max-w-[1360px] mx-auto">
             <Eyebrow color="dim" className="block mb-4">
-              Showing {filtered.length} of {JOBS.length} jobs
+              {loading ? "Fetching latest jobs…" : `Showing ${filtered.length} of ${jobs.length} jobs`}
             </Eyebrow>
-            <div
-              className="grid gap-4"
-              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}
-            >
+            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
               {filtered.map((j) => (
-                <JobCard
-                  key={j.id}
-                  job={j}
-                  saved={!!saved[j.id]}
-                  onSave={() => setSaved((s) => ({ ...s, [j.id]: !s[j.id] }))}
-                />
+                <JobCard key={j.id} job={j} saved={!!saved[j.id]} onSave={() => setSaved((s) => ({ ...s, [j.id]: !s[j.id] }))} />
               ))}
             </div>
 
-            {filtered.length === 0 && (
+            {!loading && filtered.length === 0 && (
               <div className="px-16 py-16 text-center bg-white border border-dashed border-ink rounded-[28px]">
                 <h4 className="font-display text-2xl uppercase mb-2">No matches</h4>
-                <p className="font-body text-ink/60">
-                  Try clearing filters or broadening your search.
-                </p>
+                <p className="font-body text-ink/60">Try clearing filters or broadening your search.</p>
               </div>
             )}
           </div>
