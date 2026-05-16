@@ -1,186 +1,234 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { supabase, type Job } from "@/lib/supabase";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import Eyebrow from "@/components/ui/Eyebrow";
+import Tag from "@/components/ui/Tag";
+import Avatar from "@/components/ui/Avatar";
+import Button from "@/components/ui/Button";
+import { JOBS, COMPANIES, getCompanyByName } from "@/lib/data";
+import {
+  ArrowUpRight,
+  ArrowLeft,
+  MapPin,
+  Clock,
+  DollarSign,
+  Globe,
+  Briefcase,
+  Bookmark,
+} from "lucide-react";
 
-// Demo data keyed by id
-const DEMO_JOBS: Record<string, Job & { description: string }> = {
-  "1": {
-    id: "1", title: "Senior Software Engineer", company: "Guardian Group", location: "Port of Spain, Trinidad",
-    type: "full-time", salary_range: "TTD 18,000 – 25,000/mo",
-    description: `
-## About the Role
-Guardian Group is seeking a Senior Software Engineer to join our Digital Transformation team. You'll build and maintain the insurance platforms that serve hundreds of thousands of customers across the Caribbean.
-
-## What You'll Do
-- Architect and implement scalable front-end and back-end systems using React and Node.js
-- Collaborate with product and design teams to deliver delightful user experiences
-- Lead code reviews and mentor junior engineers
-- Contribute to our cloud migration on AWS
-
-## Requirements
-- 5+ years of professional software development experience
-- Strong proficiency in React, TypeScript, and Node.js
-- Experience with cloud platforms (AWS preferred)
-- Excellent communication skills and a team-first mindset
-
-## What We Offer
-- Competitive salary: TTD 18,000 – 25,000/month
-- Health insurance and pension plan
-- Hybrid work arrangement (3 days in-office)
-- 20 days annual leave + public holidays
-- Professional development budget
-    `,
-    tags: ["React", "Node.js", "AWS", "TypeScript", "PostgreSQL"],
-    apply_url: "https://guardian.com/careers", is_featured: true, created_at: "2024-03-01"
-  },
-};
-
-// A single fallback so any unknown id gets a reasonable demo page
-const FALLBACK: Job & { description: string } = {
-  id: "demo", title: "Software Engineer", company: "Demo Company", location: "Port of Spain, Trinidad",
-  type: "full-time", salary_range: "TTD 12,000 – 18,000/mo",
-  description: "This is a demo job description. Connect your Supabase database to see real listings.",
-  tags: ["Demo"], apply_url: "#", is_featured: false, created_at: ""
-};
-
-async function getJob(id: string): Promise<(Job & { description: string }) | null> {
-  try {
-    const { data, error } = await supabase
-      .from("jobs").select("*").eq("id", id).single();
-    if (error || !data) return DEMO_JOBS[id] ?? FALLBACK;
-    return data as Job & { description: string };
-  } catch { return DEMO_JOBS[id] ?? FALLBACK; }
+export function generateStaticParams() {
+  return JOBS.map((j) => ({ id: j.id }));
 }
 
-export default async function JobDetailPage({ params }: { params: { id: string } }) {
-  const job = await getJob(params.id);
+export default function JobDetailPage({ params }: { params: { id: string } }) {
+  const job = JOBS.find((j) => j.id === params.id);
   if (!job) notFound();
 
-  const typeColors: Record<string, string> = {
-    "full-time": "badge-emerald",
-    "part-time": "badge bg-blue-50 text-blue-700",
-    contract:    "badge bg-orange-50 text-orange-700",
-    internship:  "badge bg-purple-50 text-purple-700",
-  };
+  const company = getCompanyByName(job.company);
+
+  const descLines = (job.description ?? "").split("\n\n");
 
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 bg-cream px-7 py-10">
+        <div className="max-w-[1100px] mx-auto">
+          {/* Back link */}
+          <Link
+            href="/jobs"
+            className="inline-flex items-center gap-1.5 font-body font-bold text-[11px] uppercase tracking-[0.12em] text-ink/60 hover:text-ink mb-8 transition-colors"
+          >
+            <ArrowLeft size={13} /> Back to jobs
+          </Link>
 
-        {/* Breadcrumb + header */}
-        <div className="bg-forest-800 py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <nav className="mb-4 flex items-center gap-2 text-xs text-white/40">
-              <Link href="/" className="hover:text-white">Home</Link>
-              <span>/</span>
-              <Link href="/jobs" className="hover:text-white">Jobs</Link>
-              <span>/</span>
-              <span className="text-white/70">{job.title}</span>
-            </nav>
-
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-300">{job.company}</p>
-                <h1 className="font-heading mt-1 text-3xl font-bold text-white sm:text-4xl">
-                  {job.title}
-                </h1>
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/60">
-                  <span className="flex items-center gap-1.5">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-                    {job.location}
-                  </span>
-                  {job.salary_range && (
-                    <span className="flex items-center gap-1.5">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      {job.salary_range}
-                    </span>
-                  )}
-                  <span className={typeColors[job.type] ?? "badge-gray"}>{job.type}</span>
+          {/* Main card */}
+          <div
+            className="bg-white border-2 border-ink rounded-squircle p-8 mb-6"
+            style={{ boxShadow: "8px 8px 0 0 #1C1C18" }}
+          >
+            {/* Header */}
+            <div className="flex justify-between items-start gap-6 mb-6 flex-wrap">
+              <div className="flex items-start gap-4">
+                <Avatar
+                  initials={company.initials}
+                  size={56}
+                  bg={company.bg}
+                  color={company.color}
+                />
+                <div>
+                  <Eyebrow className="block mb-1.5">{company.industry}</Eyebrow>
+                  <h1
+                    className="font-display font-bold uppercase text-ink mb-3"
+                    style={{ fontSize: "clamp(28px, 4vw, 52px)", letterSpacing: "-0.04em", lineHeight: 1 }}
+                  >
+                    {job.title}
+                  </h1>
+                  <div className="flex gap-1.5 flex-wrap">
+                    <Tag tone="cream" className="text-[9px]">
+                      <MapPin size={9} /> {job.location}
+                    </Tag>
+                    <Tag tone="cream" className="text-[9px]">
+                      <Briefcase size={9} /> {job.type}
+                    </Tag>
+                    <Tag tone="cream" className="text-[9px]">
+                      {job.level}
+                    </Tag>
+                    <Tag tone="cream" className="text-[9px]">
+                      <DollarSign size={9} /> {job.salary}
+                    </Tag>
+                    {job.remote && (
+                      <Tag tone="tealfaint" className="text-[9px]">
+                        <Globe size={9} /> Remote
+                      </Tag>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex shrink-0 flex-col gap-3 sm:items-end">
-                <a
-                  href={job.apply_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary px-8 py-3.5 text-base"
-                >
-                  Apply Now
-                </a>
-                <button className="btn-outline-light py-2.5 px-5 text-xs">
-                  Save Job
+              <div className="flex gap-2.5 flex-shrink-0">
+                <button className="w-10 h-10 border border-ink rounded-[14px] flex items-center justify-center hover:bg-lime transition-colors">
+                  <Bookmark size={16} />
                 </button>
+                <Button href="/sign-in" size="lg">
+                  Apply Now
+                </Button>
               </div>
             </div>
+
+            {/* Tags row */}
+            <div className="flex gap-1.5 flex-wrap pt-5 border-t border-ink/10">
+              {job.tags.map((t) => (
+                <Tag key={t} tone="ghost" className="text-[9px]">
+                  {t}
+                </Tag>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Body */}
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-8 lg:flex-row">
+          {/* Body — 2 col */}
+          <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 340px" }}>
+            {/* Left — description */}
+            <div
+              className="bg-white border border-ink rounded-squircle p-8"
+              style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
+            >
+              <Eyebrow className="block mb-4">About this role</Eyebrow>
+              <div className="font-body text-[15px] leading-[1.65] text-ink/80 space-y-4">
+                {descLines.map((para, i) => {
+                  if (para.startsWith("**") && para.endsWith("**")) {
+                    return (
+                      <h3
+                        key={i}
+                        className="font-display font-bold text-[18px] uppercase tracking-[-0.025em] text-ink mt-6 mb-2"
+                      >
+                        {para.replace(/\*\*/g, "")}
+                      </h3>
+                    );
+                  }
+                  if (para.startsWith("- ")) {
+                    const items = para.split("\n- ").map((l) => l.replace(/^- /, ""));
+                    return (
+                      <ul key={i} className="list-none p-0 m-0 flex flex-col gap-2">
+                        {items.map((item, j) => (
+                          <li key={j} className="flex gap-2.5 items-start">
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal flex-shrink-0 mt-[7px]" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return <p key={i}>{para}</p>;
+                })}
+              </div>
 
-            {/* Main content */}
-            <article className="flex-1">
-              <div className="card">
-                <h2 className="font-heading text-xl font-bold text-forest-800 mb-4">Job Description</h2>
-                <div className="prose prose-sm prose-headings:font-heading prose-headings:text-forest-800 prose-a:text-emerald max-w-none text-gray-600 leading-relaxed">
-                  {job.description.split('\n').map((line, i) => {
-                    if (line.startsWith('## ')) {
-                      return <h2 key={i} className="font-heading text-lg font-bold text-forest-800 mt-6 mb-3">{line.replace('## ', '')}</h2>;
-                    }
-                    if (line.startsWith('- ')) {
-                      return <li key={i} className="ml-4 text-sm">{line.replace('- ', '')}</li>;
-                    }
-                    if (line.trim() === '') return <br key={i} />;
-                    return <p key={i} className="text-sm">{line}</p>;
-                  })}
+              {/* Tags */}
+              <div className="mt-8 pt-6 border-t border-ink/10">
+                <Eyebrow color="dim" className="block mb-3">
+                  Skills & tools
+                </Eyebrow>
+                <div className="flex gap-1.5 flex-wrap">
+                  {job.tags.map((t) => (
+                    <Tag key={t} tone="cream">
+                      {t}
+                    </Tag>
+                  ))}
                 </div>
               </div>
-            </article>
+            </div>
 
-            {/* Sidebar */}
-            <aside className="shrink-0 space-y-5 lg:w-72">
-              {/* Overview */}
-              <div className="card">
-                <h3 className="font-heading font-bold text-forest-800 mb-4">Job Overview</h3>
-                <dl className="space-y-3">
+            {/* Right sidebar */}
+            <div className="flex flex-col gap-4">
+              {/* At a glance */}
+              <div
+                className="bg-white border border-ink rounded-squircle p-6"
+                style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
+              >
+                <Eyebrow className="block mb-4">At a glance</Eyebrow>
+                <dl className="flex flex-col gap-4">
                   {[
-                    { label: "Company",   value: job.company },
-                    { label: "Location",  value: job.location },
-                    { label: "Job Type",  value: job.type },
-                    { label: "Salary",    value: job.salary_range ?? "Not specified" },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">{label}</dt>
-                      <dd className="mt-0.5 text-sm text-gray-700 capitalize">{value}</dd>
+                    { icon: <MapPin size={14} />, label: "Location", value: job.location },
+                    { icon: <Briefcase size={14} />, label: "Type", value: job.type },
+                    { icon: <Clock size={14} />, label: "Level", value: job.level },
+                    { icon: <DollarSign size={14} />, label: "Salary", value: job.salary },
+                    { icon: <Clock size={14} />, label: "Closes", value: job.closing },
+                    { icon: <Clock size={14} />, label: "Posted", value: job.posted },
+                  ].map(({ icon, label, value }) => (
+                    <div key={label} className="flex items-start gap-2.5">
+                      <span className="text-ink/40 mt-0.5 flex-shrink-0">{icon}</span>
+                      <div className="min-w-0">
+                        <dt className="font-body font-bold text-[10px] uppercase tracking-[0.1em] text-ink/40 mb-0.5">
+                          {label}
+                        </dt>
+                        <dd className="font-body font-medium text-sm text-ink">{value}</dd>
+                      </div>
                     </div>
                   ))}
                 </dl>
-              </div>
 
-              {/* Skills */}
-              <div className="card">
-                <h3 className="font-heading font-bold text-forest-800 mb-4">Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {job.tags.map((tag) => (
-                    <span key={tag} className="badge-gray">{tag}</span>
-                  ))}
+                <div className="mt-6 pt-5 border-t border-ink/10 flex flex-col gap-2.5">
+                  <Button block href="/sign-in" size="md">
+                    Apply Now
+                  </Button>
+                  <button className="w-full flex items-center justify-center gap-1.5 font-body font-bold text-[11px] uppercase tracking-[0.1em] py-2.5 border border-ink rounded-squircle-sm hover:scale-95 transition-transform">
+                    <Bookmark size={13} /> Save role
+                  </button>
                 </div>
               </div>
 
-              {/* Apply CTA */}
-              <div className="rounded-2xl bg-forest-800 p-6 text-white text-center">
-                <p className="font-heading font-bold text-lg">Interested?</p>
-                <p className="mt-1 text-xs text-white/60">Submit your application directly to {job.company}.</p>
-                <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="btn-primary mt-5 w-full justify-center">
-                  Apply Now
-                </a>
-              </div>
-            </aside>
+              {/* Company card */}
+              <Link
+                href={`/companies/${company.id}`}
+                className="bg-white border border-ink rounded-squircle p-5 block hover:-translate-y-0.5 transition-transform duration-200"
+                style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
+              >
+                <Eyebrow color="dim" className="block mb-3">
+                  About the employer
+                </Eyebrow>
+                <div className="flex items-center gap-3 mb-3">
+                  <Avatar
+                    initials={company.initials}
+                    size={40}
+                    bg={company.bg}
+                    color={company.color}
+                  />
+                  <div>
+                    <div className="font-display font-bold text-[15px] uppercase tracking-[-0.02em]">
+                      {company.name}
+                    </div>
+                    <div className="font-body text-xs text-ink/55">{company.industry}</div>
+                  </div>
+                </div>
+                <p className="font-body text-[13px] text-ink/70 leading-[1.5] mb-3">
+                  {company.about.slice(0, 120)}…
+                </p>
+                <div className="flex items-center gap-1 font-body font-bold text-[10px] uppercase tracking-[0.1em] text-teal">
+                  View company profile <ArrowUpRight size={11} />
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </main>

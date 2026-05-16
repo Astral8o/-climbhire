@@ -1,27 +1,36 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Instrument_Sans } from "next/font/google";
+import { Epilogue, Manrope, Cedarville_Cursive } from "next/font/google";
 import "./globals.css";
 
-const playfair = Playfair_Display({
+const epilogue = Epilogue({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-epilogue",
+  weight: ["500", "600", "700", "800", "900"],
   display: "swap",
 });
 
-const instrument = Instrument_Sans({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-instrument",
+  variable: "--font-manrope",
+  weight: ["400", "500", "700"],
+  display: "swap",
+});
+
+const cedarville = Cedarville_Cursive({
+  subsets: ["latin"],
+  variable: "--font-cedarville",
+  weight: "400",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "ClimbHire — Trinidad & Tobago's Talent Platform",
+  title: "ClimbHire Caribbean — Free jobs for the Caribbean",
   description:
-    "Connect with top employers across Trinidad and Tobago. ClimbHire is the Caribbean's leading platform for ambitious professionals and forward-thinking companies.",
+    "ClimbHire Caribbean is a completely free job board connecting Caribbean job seekers with verified regional employers. No fees, no subscriptions, no catch.",
   openGraph: {
-    title: "ClimbHire — Trinidad & Tobago's Talent Platform",
+    title: "ClimbHire Caribbean — Free jobs for the Caribbean",
     description:
-      "The Caribbean's leading talent platform. Find great jobs or hire exceptional people.",
+      "Free for everyone. Always. Browse jobs or post up to 3 roles free.",
     type: "website",
   },
 };
@@ -32,8 +41,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${instrument.variable}`}>
-      <body className="font-body">{children}</body>
+    <html
+      lang="en"
+      className={`${epilogue.variable} ${manrope.variable} ${cedarville.variable}`}
+    >
+      <body className="font-body bg-cream text-ink">{children}</body>
     </html>
   );
 }

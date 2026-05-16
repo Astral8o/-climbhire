@@ -1,56 +1,90 @@
 import Link from "next/link";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
 
-const LINKS = {
-  "For Job Seekers": [
-    { label: "Browse Jobs",        href: "/jobs" },
-    { label: "Create Profile",     href: "/profile/new" },
-    { label: "For Professionals",  href: "/for-professionals" },
-  ],
-  "For Employers": [
-    { label: "Post a Job",        href: "/for-employers" },
-    { label: "Browse Talent",     href: "/for-employers#talent" },
-    { label: "Pricing",           href: "/for-employers#pricing" },
-  ],
-  Company: [
-    { label: "About",   href: "#" },
-    { label: "Blog",    href: "#" },
-    { label: "Contact", href: "mailto:hello@climbhire.com" },
-  ],
-};
+const FOOTER_LINKS = [
+  {
+    title: "Platform",
+    items: [
+      { label: "Find Jobs", href: "/jobs" },
+      { label: "Companies", href: "/companies" },
+      { label: "FAQ", href: "/faq" },
+    ],
+  },
+  {
+    title: "Employers",
+    items: [
+      { label: "For Employers", href: "/employers" },
+      { label: "Post a Job (Free)", href: "/employers/onboarding" },
+      { label: "Moderation Policy", href: "/employers" },
+    ],
+  },
+  {
+    title: "Company",
+    items: [
+      { label: "About", href: "/" },
+      { label: "Contact", href: "/" },
+      { label: "Blog", href: "/" },
+    ],
+  },
+  {
+    title: "Support",
+    items: [
+      { label: "Help Center", href: "/faq" },
+      { label: "hello@climbhire.cc", href: "mailto:hello@climbhire.cc" },
+      { label: "Terms", href: "/" },
+      { label: "Privacy", href: "/" },
+    ],
+  },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-forest-800 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-          {/* Brand */}
-          <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-lime">
-                <svg className="h-5 w-5 text-forest-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-                </svg>
+    <footer className="bg-ink text-white px-7 pt-[72px] pb-7 border-t border-ink">
+      <div className="max-w-[1360px] mx-auto">
+        <div
+          className="grid gap-14 pb-14 border-b border-white/10"
+          style={{ gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr" }}
+        >
+          {/* Brand col */}
+          <div>
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="w-[34px] h-[34px] bg-lime border border-white rounded-[10px] flex items-center justify-center text-ink">
+                <ArrowUpRight size={19} strokeWidth={2.5} />
               </div>
-              <span className="font-heading text-xl font-bold">
-                Climb<span className="text-lime">Hire</span>
+              <span className="font-display font-bold text-base uppercase tracking-[-0.035em]">
+                ClimbHire Caribbean
               </span>
-            </Link>
-            <p className="mt-4 text-sm text-white/60 leading-relaxed">
-              Trinidad & Tobago's premier talent platform — connecting ambitious Caribbean professionals with the region's best employers.
+            </div>
+            <p className="text-white/60 text-sm leading-relaxed max-w-[260px] mb-6">
+              The Caribbean&apos;s free job board. Reimagining recruitment for the region.
             </p>
-            <p className="mt-4 text-xs text-white/40">Port of Spain, Trinidad and Tobago</p>
+            <div className="flex gap-2.5">
+              {["tw", "ig", "in", "fb"].map((k) => (
+                <a
+                  key={k}
+                  href="#"
+                  aria-label={k}
+                  className="w-[38px] h-[38px] border border-white/20 rounded-xl flex items-center justify-center text-white/80 hover:bg-lime hover:text-ink hover:border-lime transition-all duration-200 font-mono text-[9px] uppercase tracking-widest"
+                >
+                  {k}
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Link columns */}
-          {Object.entries(LINKS).map(([heading, items]) => (
-            <div key={heading}>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-lime mb-4">
-                {heading}
-              </h3>
-              <ul className="space-y-2.5">
+          {FOOTER_LINKS.map(({ title, items }) => (
+            <div key={title}>
+              <h4 className="font-display text-[10px] uppercase tracking-[0.22em] text-lime mb-5 font-bold">
+                {title}
+              </h4>
+              <ul className="flex flex-col gap-3.5">
                 {items.map(({ label, href }) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link
+                      href={href}
+                      className="text-[13px] text-white/70 hover:text-white transition-colors"
+                    >
                       {label}
                     </Link>
                   </li>
@@ -60,17 +94,12 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-          <p className="text-xs text-white/40">
-            © {new Date().getFullYear()} ClimbHire. All rights reserved.
-          </p>
-          <div className="flex gap-6">
-            {["Privacy Policy", "Terms of Use"].map((item) => (
-              <Link key={item} href="#" className="text-xs text-white/40 hover:text-white/70">
-                {item}
-              </Link>
-            ))}
-          </div>
+        {/* Bottom row */}
+        <div className="flex justify-between items-center pt-7 font-body text-[11px] text-white/40">
+          <span>© 2026 ClimbHire Caribbean. Port of Spain · Bridgetown · Kingston.</span>
+          <span className="font-mono uppercase tracking-[0.22em] text-[10px]">
+            <span className="text-lime">●</span>&nbsp; All systems operational
+          </span>
         </div>
       </div>
     </footer>

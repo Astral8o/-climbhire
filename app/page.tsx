@@ -1,303 +1,654 @@
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { supabase, type Job, type Testimonial } from "@/lib/supabase";
+import Highlight from "@/components/ui/Highlight";
+import Eyebrow from "@/components/ui/Eyebrow";
+import Tag from "@/components/ui/Tag";
+import Avatar from "@/components/ui/Avatar";
+import PanelChrome from "@/components/ui/PanelChrome";
+import HoverCard from "@/components/ui/HoverCard";
+import Button from "@/components/ui/Button";
+import FAQ from "@/components/FAQ";
+import { COMPANIES, JOBS, FEATURED_JOB_IDS, getCompanyByName } from "@/lib/data";
+import {
+  ArrowUpRight,
+  Check,
+  Bookmark,
+  Search,
+  MapPin,
+  Filter,
+  Share2,
+  Zap,
+  X,
+  Plus,
+} from "lucide-react";
 
-/* ─── Demo data (renders while Supabase tables are empty) ─── */
-const DEMO_JOBS: Job[] = [
-  { id: "1", title: "Senior Software Engineer", company: "Guardian Group", location: "Port of Spain", type: "full-time", salary_range: "TTD 18,000 – 25,000/mo", description: "", tags: ["React", "Node.js", "AWS"], apply_url: "/jobs/1", is_featured: true,  created_at: "" },
-  { id: "2", title: "Marketing Manager",        company: "Massy Holdings",  location: "San Fernando",  type: "full-time", salary_range: "TTD 12,000 – 16,000/mo", description: "", tags: ["Brand", "Digital", "CRM"], apply_url: "/jobs/2", is_featured: false, created_at: "" },
-  { id: "3", title: "Financial Analyst",        company: "Republic Bank",   location: "Port of Spain", type: "full-time", salary_range: "TTD 10,000 – 14,000/mo", description: "", tags: ["Excel", "SAP", "IFRS"],   apply_url: "/jobs/3", is_featured: false, created_at: "" },
-  { id: "4", title: "UX/UI Designer",           company: "Digicel T&T",    location: "Remote (T&T)",  type: "full-time", salary_range: "TTD 9,000 – 13,000/mo",  description: "", tags: ["Figma", "Research"],        apply_url: "/jobs/4", is_featured: true,  created_at: "" },
-  { id: "5", title: "Project Manager",          company: "NGC",            location: "Point Lisas",   type: "full-time", salary_range: "TTD 15,000 – 22,000/mo", description: "", tags: ["Agile", "PMP"],            apply_url: "/jobs/5", is_featured: false, created_at: "" },
-  { id: "6", title: "Data Analyst",             company: "Caribbean Airlines", location: "Piarco",    type: "contract",  salary_range: "TTD 8,000 – 11,000/mo",  description: "", tags: ["Python", "SQL", "Power BI"], apply_url: "/jobs/6", is_featured: false, created_at: "" },
+const FEATURED = FEATURED_JOB_IDS.map((id) => JOBS.find((j) => j.id === id)!).filter(Boolean);
+
+const TRUST_NAMES = [
+  "Get Right Finance",
+  "MyGG",
+  "bmobile",
+  "Digicel",
+  "Massy Stores",
+  "Sagicor",
+  "Island Finance",
+  "Republic Bank",
 ];
 
-const DEMO_TESTIMONIALS: Testimonial[] = [
-  { id: "1", name: "Candice Williams", role: "Software Engineer", company: "Guardian Group",    quote: "ClimbHire connected me with my dream role in two weeks. The listings are actually relevant — no noise.",                              created_at: "" },
-  { id: "2", name: "Darius Baptiste",  role: "HR Director",       company: "Massy Holdings",   quote: "We reduced our time-to-hire by 40%. The quality of candidates from ClimbHire is head and shoulders above traditional job boards.", created_at: "" },
-  { id: "3", name: "Priya Rampersad", role: "UX Designer",        company: "Digicel T&T",      quote: "As a creative professional I struggled to find good T&T-based roles. ClimbHire actually curates for our market.",                  created_at: "" },
+const ASSIST_CONVERSATION = [
+  {
+    from: "bot",
+    text: "Hi! I'm ClimbHire Assist. What kind of role are you looking for today?",
+  },
+  {
+    from: "user",
+    text: "Product design roles in Trinidad, remote-friendly.",
+  },
+  {
+    from: "bot",
+    text: "Got it. I found 4 matches — the strongest is Senior UX Designer at Get Right Finance. Want me to show you the listing?",
+  },
+  {
+    from: "user",
+    text: "Yes, and what does the application process look like?",
+  },
+  {
+    from: "bot",
+    text: "Sign in to ClimbHire, hit Apply on the job, and your application is sent directly to the employer's inbox. ClimbHire doesn't store your resume — only the employer receives it.",
+  },
 ];
 
-const SECTORS = ["Technology", "Finance & Banking", "Energy & Petroleum", "Marketing", "Healthcare", "Engineering", "Education", "Hospitality"];
-
-const STATS = [
-  { value: "2,400+", label: "Active Listings" },
-  { value: "450+",   label: "Companies" },
-  { value: "12,000+", label: "Professionals" },
-  { value: "94%",   label: "Placement Rate" },
-];
-
-async function getFeaturedJobs(): Promise<Job[]> {
-  try {
-    const { data, error } = await supabase
-      .from("jobs").select("*")
-      .eq("is_published", true)
-      .order("is_featured", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(6);
-    if (error || !data?.length) return DEMO_JOBS;
-    return data as Job[];
-  } catch { return DEMO_JOBS; }
-}
-
-async function getTestimonials(): Promise<Testimonial[]> {
-  try {
-    const { data, error } = await supabase
-      .from("testimonials").select("*")
-      .order("created_at", { ascending: false })
-      .limit(3);
-    if (error || !data?.length) return DEMO_TESTIMONIALS;
-    return data as Testimonial[];
-  } catch { return DEMO_TESTIMONIALS; }
-}
-
-export default async function HomePage() {
-  const [jobs, testimonials] = await Promise.all([getFeaturedJobs(), getTestimonials()]);
-
+export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1">
-
         {/* ── Hero ── */}
-        <section className="relative overflow-hidden bg-forest-800">
-          {/* Radial glow */}
-          <div className="pointer-events-none absolute inset-0 bg-hero-pattern" />
-          {/* Grid texture */}
-          <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
-            style={{ backgroundImage: "repeating-linear-gradient(0deg,#fff 0,#fff 1px,transparent 1px,transparent 40px),repeating-linear-gradient(90deg,#fff 0,#fff 1px,transparent 1px,transparent 40px)" }} />
-
-          <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
-            <div className="max-w-3xl">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald/30 bg-emerald/10 px-4 py-1.5 text-sm text-emerald-300">
-                <span className="h-2 w-2 rounded-full bg-lime animate-pulse" />
-                Trinidad & Tobago's #1 Talent Platform
+        <section className="bg-cream border-b border-ink px-7 pt-[84px] pb-[120px] relative overflow-hidden">
+          <div className="max-w-[1360px] mx-auto grid gap-14 items-center" style={{ gridTemplateColumns: "1.15fr 1fr" }}>
+            {/* Left */}
+            <div>
+              {/* Status pill */}
+              <div className="inline-flex items-center gap-2.5 mb-8 px-3.5 py-2 bg-white border border-ink rounded-full">
+                <span
+                  className="w-[7px] h-[7px] rounded-full bg-lime"
+                  style={{ boxShadow: "0 0 0 3px rgba(212,255,94,0.3)" }}
+                />
+                <span className="font-body font-bold text-[10px] uppercase tracking-[0.22em]">
+                  Now live across the Caribbean
+                </span>
               </div>
 
-              <h1 className="font-heading text-5xl font-bold leading-tight text-white sm:text-6xl lg:text-7xl">
-                Your next <br />
-                <span className="text-lime">big career</span> <br />
-                starts here.
+              <h1
+                className="font-display font-bold uppercase text-ink mb-9"
+                style={{
+                  fontSize: "clamp(56px, 9vw, 136px)",
+                  letterSpacing: "-0.05em",
+                  lineHeight: 0.94,
+                }}
+              >
+                <div>Grow here.</div>
+                <div>
+                  <Highlight color="#70A4A4" delay={0.9}>
+                    Hire here.
+                  </Highlight>
+                </div>
               </h1>
 
-              <p className="mt-6 max-w-xl text-lg text-white/70 leading-relaxed">
-                ClimbHire connects ambitious professionals across Trinidad & Tobago with the region's top employers — from energy giants to tech startups.
+              <p className="font-body font-medium text-xl leading-[1.45] max-w-[560px] mb-10 text-ink/75">
+                We{" "}
+                <Highlight color="#D4FF5E" delay={1.3}>
+                  illuminate
+                </Highlight>{" "}
+                opportunity. Connecting Caribbean job seekers to leading companies in the Caribbean &amp; beyond.
               </p>
 
-              <div className="mt-10 flex flex-wrap gap-4">
-                <Link href="/jobs" className="btn-primary text-base px-8 py-3.5">
-                  Explore Jobs
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" /></svg>
-                </Link>
-                <Link href="/for-employers" className="btn-outline-light text-base px-8 py-3.5">
-                  Hire Talent
-                </Link>
+              <div className="flex gap-3.5 flex-wrap">
+                <Button size="lg" href="/jobs">Find your next job</Button>
+                <Button size="lg" variant="secondary" href="/employers">Hire with us</Button>
               </div>
+            </div>
 
-              {/* Quick search hint */}
-              <div className="mt-8 flex flex-wrap gap-2">
-                {["Software Engineer", "Finance", "Energy Sector", "Remote"].map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/jobs?q=${encodeURIComponent(tag)}`}
-                    className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-white/60 hover:border-lime/40 hover:text-lime transition-colors"
+            {/* Right — hero image */}
+            <div className="relative aspect-[5/6] max-w-[520px] ml-auto w-full">
+              <div
+                className="absolute bg-lime rounded-[40px] opacity-35"
+                style={{ inset: "-20px -20px -20px 20px", transform: "rotate(-4deg)" }}
+              />
+              <div
+                className="absolute bg-teal rounded-[40px] opacity-25"
+                style={{ inset: "10px -30px -10px -10px", transform: "rotate(3deg)" }}
+              />
+              <div
+                className="absolute inset-0 border border-ink rounded-[40px] overflow-hidden bg-[#ddd]"
+                style={{ boxShadow: "16px 16px 0 0 #1C1C18" }}
+              >
+                <Image
+                  src="/hero-portrait.png"
+                  alt="Caribbean professional"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                {/* Hired toast */}
+                <div
+                  className="absolute left-5 bottom-5 bg-white border border-ink rounded-[20px] px-3.5 py-2.5 flex items-center gap-2.5"
+                  style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
+                >
+                  <div className="w-7 h-7 bg-lime rounded-lg flex items-center justify-center">
+                    <Check size={14} />
+                  </div>
+                  <div>
+                    <div className="font-display font-bold text-xs uppercase tracking-[-0.02em]">
+                      Kalinda hired
+                    </div>
+                    <div className="font-body text-[10px] text-ink/60">
+                      Senior UX · Get Right Finance
+                    </div>
+                  </div>
+                </div>
+                {/* Verified badge */}
+                <div
+                  className="absolute right-4 top-4 bg-ink text-lime border border-ink rounded-2xl px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em]"
+                  style={{ boxShadow: "4px 4px 0 0 #D4FF5E" }}
+                >
+                  Verified · Live
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── TrustBar ── */}
+        <section className="bg-ink border-b border-ink py-7 overflow-hidden relative">
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 bg-ink pr-3.5 z-10 flex items-center gap-2.5">
+            <Eyebrow color="invert" className="text-[9px]">
+              Leading companies
+            </Eyebrow>
+          </div>
+          <div
+            className="flex whitespace-nowrap pl-[200px]"
+            style={{ animation: "marquee 32s linear infinite" }}
+          >
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-14 pr-14">
+                {TRUST_NAMES.map((n) => (
+                  <span
+                    key={n + i}
+                    className="font-display text-[22px] uppercase tracking-[0.22em] font-semibold text-white/45"
                   >
-                    {tag}
-                  </Link>
+                    {n}
+                  </span>
                 ))}
               </div>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* ── Stats ── */}
-        <section className="border-b border-gray-100 bg-white py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <dl className="grid grid-cols-2 gap-8 md:grid-cols-4">
-              {STATS.map(({ value, label }) => (
-                <div key={label} className="text-center">
-                  <dd className="font-heading text-4xl font-bold text-forest-800">{value}</dd>
-                  <dt className="mt-1 text-sm text-gray-500">{label}</dt>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
-
-        {/* ── Browse by Sector ── */}
-        <section className="bg-gray-50 py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <p className="section-label">Explore</p>
-              <h2 className="font-heading mt-2 text-3xl font-bold text-forest-800 sm:text-4xl">
-                Browse by sector
-              </h2>
-            </div>
-            <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {SECTORS.map((sector) => (
-                <Link
-                  key={sector}
-                  href={`/jobs?sector=${encodeURIComponent(sector)}`}
-                  className="group flex items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-emerald hover:shadow-md"
-                >
-                  <span className="group-hover:text-forest-800">{sector}</span>
-                  <svg className="h-4 w-4 text-gray-300 group-hover:text-emerald transition-colors" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
-                  </svg>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Featured Jobs ── */}
-        <section className="bg-white py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between">
+        {/* ── Featured Opportunities ── */}
+        <section className="bg-cream border-b border-ink px-7 py-[108px]">
+          <div className="max-w-[1360px] mx-auto">
+            <div className="flex justify-between items-end mb-14 gap-8 flex-wrap">
               <div>
-                <p className="section-label">Opportunities</p>
-                <h2 className="font-heading mt-2 text-3xl font-bold text-forest-800 sm:text-4xl">
-                  Featured jobs
+                <Eyebrow className="mb-4 block">§ 02 · Opportunities</Eyebrow>
+                <h2
+                  className="font-display font-semibold uppercase text-ink m-0"
+                  style={{
+                    fontSize: "clamp(52px, 7vw, 108px)",
+                    letterSpacing: "-0.045em",
+                    lineHeight: 0.95,
+                  }}
+                >
+                  Featured <br />
+                  opportunities.
                 </h2>
               </div>
-              <Link href="/jobs" className="hidden text-sm font-medium text-emerald hover:text-emerald-600 sm:inline-flex items-center gap-1">
-                View all
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" /></svg>
-              </Link>
+              <div className="flex flex-col items-end gap-4">
+                <Tag tone="ink">
+                  <span className="w-1.5 h-1.5 rounded-full bg-lime mr-0.5" />
+                  Updated daily
+                </Tag>
+              </div>
             </div>
 
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {jobs.map((job) => (
-                <Link key={job.id} href={`/jobs/${job.id}`} className="card group relative flex flex-col gap-4 hover:border-emerald/30">
-                  {job.is_featured && (
-                    <span className="badge-lime absolute right-4 top-4">Featured</span>
-                  )}
-                  <div>
-                    <p className="text-xs font-medium text-gray-400">{job.company}</p>
-                    <h3 className="font-heading mt-1 text-lg font-semibold text-forest-800 group-hover:text-emerald transition-colors leading-snug">
-                      {job.title}
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
-                      {job.location}
-                    </span>
-                    {job.salary_range && (
-                      <span className="flex items-center gap-1">
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        {job.salary_range}
+            <div className="grid gap-10" style={{ gridTemplateColumns: "1fr 2fr" }}>
+              {/* Companies column */}
+              <div>
+                <Eyebrow color="dim" className="mb-4 block">
+                  Hiring teams
+                </Eyebrow>
+                <div className="flex flex-col gap-3.5 mb-5">
+                  {COMPANIES.slice(0, 5).map((c) => (
+                    <HoverCard key={c.id} shadowOn={false} className="p-4">
+                      <Link
+                        href={`/companies/${c.id}`}
+                        className="flex justify-between items-center"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <Avatar initials={c.initials} size={44} bg={c.bg} color={c.color} />
+                          <div className="min-w-0">
+                            <div className="font-display font-semibold text-[18px] uppercase tracking-[-0.03em] leading-none mb-1.5 truncate">
+                              {c.name}
+                            </div>
+                            <div className="font-body font-bold uppercase text-[9px] tracking-[0.18em] text-ink/45">
+                              {c.jobs} roles · {c.location.split(",")[1]?.trim() ?? c.location}
+                            </div>
+                          </div>
+                        </div>
+                        <ArrowUpRight size={17} />
+                      </Link>
+                    </HoverCard>
+                  ))}
+                </div>
+                <Button variant="outline" block href="/companies">Explore all companies</Button>
+              </div>
+
+              {/* Jobs grid */}
+              <div>
+                <Eyebrow color="dim" className="mb-4 block">
+                  Open positions · {FEATURED.length} featured
+                </Eyebrow>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {FEATURED.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+                <div className="flex justify-center">
+                  <Button variant="outline" href="/jobs">See all {JOBS.length} jobs</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Jobs Preview ── */}
+        <section className="bg-white border-b border-ink px-7 py-[120px] relative overflow-hidden">
+          <div className="max-w-[1360px] mx-auto">
+            <div className="grid gap-16 items-center" style={{ gridTemplateColumns: "1fr 1.3fr" }}>
+              {/* Left copy */}
+              <div>
+                <Eyebrow className="mb-4 block">§ 03 · For Job Seekers</Eyebrow>
+                <h2
+                  className="font-display font-semibold uppercase text-ink mb-7"
+                  style={{
+                    fontSize: "clamp(48px, 6.5vw, 92px)",
+                    letterSpacing: "-0.045em",
+                    lineHeight: 0.95,
+                  }}
+                >
+                  Find your
+                  <br />
+                  next{" "}
+                  <Highlight color="#70A4A4" delay={0}>
+                    climb.
+                  </Highlight>
+                </h2>
+                <p className="font-body font-medium text-lg leading-[1.55] text-ink/70 mb-8 max-w-[480px]">
+                  Browse verified roles across the region — filter by island, type, level and
+                  category. Save what you love, share with a friend, and apply when you&apos;re ready.
+                </p>
+                <ul className="list-none p-0 m-0 flex flex-col gap-3.5 mb-9">
+                  {[
+                    ["100% free, forever", "No fees, no paywalls."],
+                    ["Verified employers", "Every employer is reviewed before posting."],
+                    ["Save & share jobs", "Bookmark roles or send to a friend."],
+                    ["Sign in to apply", "Applications go straight to the employer."],
+                  ].map(([t, d]) => (
+                    <li key={t} className="flex gap-3.5 items-start">
+                      <div className="w-6 h-6 rounded-lg bg-lime border border-ink flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check size={13} strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <div className="font-display font-semibold text-[15px] uppercase tracking-[-0.02em] mb-0.5">
+                          {t}
+                        </div>
+                        <div className="font-body text-[13px] text-ink/60">{d}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-3 flex-wrap">
+                  <Button href="/jobs">Browse all jobs</Button>
+                  <Button variant="ghost" href="/sign-up">Create free account</Button>
+                </div>
+              </div>
+
+              {/* Right — PanelChrome */}
+              <PanelChrome
+                label="Find_Jobs::Live_Search"
+                status="Live"
+                statusColor="lime"
+                shadowClass="shadow-stamp-lime"
+              >
+                <div className="p-5 bg-cream">
+                  {/* Mock search bar */}
+                  <div className="flex gap-2 mb-3.5">
+                    <div className="flex-1 flex items-center gap-2.5 px-4 py-3 bg-white border border-ink rounded-2xl">
+                      <Search size={14} />
+                      <span className="font-body text-[13px] font-semibold">Product designer</span>
+                      <span className="flex-1 border-l border-ink/20 ml-1.5 pl-2.5 font-body text-[13px] text-ink/50 flex items-center gap-1.5">
+                        <MapPin size={12} />
+                        Caribbean
                       </span>
-                    )}
+                    </div>
+                    <div className="px-4 py-3 bg-ink text-white rounded-2xl flex items-center gap-1.5 font-body font-bold text-[11px] uppercase tracking-[0.1em]">
+                      <Filter size={12} />
+                      Filters · 2
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-auto">
-                    {job.tags.map((tag) => (
-                      <span key={tag} className="badge-gray">{tag}</span>
+                  {/* Filter chips */}
+                  <div className="flex gap-1.5 flex-wrap mb-3.5">
+                    {["Full-time", "Remote-friendly", "Senior"].map((c) => (
+                      <span
+                        key={c}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-lime border border-ink rounded-xl font-body font-bold text-[10px] uppercase tracking-[0.1em]"
+                      >
+                        {c} <X size={9} />
+                      </span>
                     ))}
+                    <span className="inline-flex items-center px-2.5 py-1.5 border border-dashed border-ink rounded-xl font-body font-semibold text-[10px] uppercase tracking-[0.1em] text-ink/55">
+                      + Add filter
+                    </span>
                   </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-8 text-center sm:hidden">
-              <Link href="/jobs" className="btn-outline-dark">View all jobs</Link>
+                  <Eyebrow color="dim" className="block mb-2.5">
+                    4 of 38 results
+                  </Eyebrow>
+                  {/* Job rows */}
+                  <div className="flex flex-col gap-2">
+                    {JOBS.slice(0, 4).map((j, i) => {
+                      const comp = getCompanyByName(j.company);
+                      return (
+                        <div
+                          key={j.id}
+                          className="flex items-center gap-3 px-3.5 py-3 bg-white border border-ink rounded-2xl cursor-pointer"
+                        >
+                          <Avatar initials={comp.initials} size={38} bg={comp.bg} color={comp.color} />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-display font-bold text-[13px] uppercase tracking-[-0.02em] leading-[1.15] mb-0.5">
+                              {j.title}
+                            </div>
+                            <div className="flex items-center gap-1.5 font-body text-[11px] text-ink/65">
+                              <span className="text-teal font-bold">{j.company}</span>
+                              <span className="opacity-40">·</span>
+                              <span>{j.location}</span>
+                            </div>
+                          </div>
+                          <Tag tone={i === 0 ? "lime" : "cream"} className="text-[9px]">
+                            {j.category}
+                          </Tag>
+                          <Bookmark size={15} className="text-ink/40" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex justify-between items-center font-body text-[11px] text-ink/55">
+                    <span className="flex items-center gap-1.5">
+                      <Share2 size={11} /> Tap any job to view, save or share
+                    </span>
+                    <Link
+                      href="/jobs"
+                      className="font-bold text-ink uppercase tracking-[0.1em] flex items-center gap-1"
+                    >
+                      View all <ArrowUpRight size={11} />
+                    </Link>
+                  </div>
+                </div>
+              </PanelChrome>
             </div>
           </div>
         </section>
 
-        {/* ── Split CTA ── */}
-        <section className="bg-gray-50 py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Professionals */}
-              <div className="rounded-3xl bg-forest-800 p-10 text-white">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-lime/20 px-3 py-1 text-xs font-semibold text-lime">
-                  For Professionals
-                </div>
-                <h3 className="font-heading text-2xl font-bold sm:text-3xl">
-                  Take your career to new heights.
-                </h3>
-                <p className="mt-3 text-white/70 text-sm leading-relaxed">
-                  Build a standout profile, get discovered by top employers, and access roles you won't find anywhere else in T&T.
-                </p>
-                <Link href="/for-professionals" className="btn-primary mt-8 inline-flex">
-                  Get Started
-                </Link>
-              </div>
+        {/* ── Assist Showcase ── */}
+        <section className="bg-cream border-b border-ink px-7 py-[120px] relative overflow-hidden">
+          <div className="max-w-[1360px] mx-auto">
+            <div className="grid gap-16 items-center" style={{ gridTemplateColumns: "1.3fr 1fr" }}>
+              {/* Left — PanelChrome */}
+              <PanelChrome
+                label="ClimbHire_Assist::v1.0"
+                status="Online"
+                statusColor="lime"
+                shadowClass="shadow-[16px_16px_0_0_#70A4A4]"
+              >
+                <div className="bg-white">
+                  {/* Chat header */}
+                  <div className="px-4 py-3.5 bg-ink text-white flex items-center gap-3 border-b border-ink">
+                    <div className="w-9 h-9 bg-lime border border-white rounded-[10px] flex items-center justify-center text-ink relative">
+                      <Zap size={18} fill="currentColor" />
+                      <div className="absolute -bottom-[3px] -right-[3px] w-3 h-3 bg-lime border-2 border-ink rounded-full" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-display font-bold text-sm uppercase tracking-[-0.02em]">
+                        ClimbHire Assist
+                      </div>
+                      <div className="font-body text-[10px] text-white/60 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 bg-lime rounded-full" /> AI · Online · Avg reply 1s
+                      </div>
+                    </div>
+                    <X size={14} strokeWidth={2} className="text-white/60" />
+                  </div>
 
-              {/* Employers */}
-              <div className="rounded-3xl border-2 border-emerald bg-white p-10">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald/10 px-3 py-1 text-xs font-semibold text-emerald">
-                  For Employers
+                  {/* Messages */}
+                  <div className="p-5 bg-cream min-h-[340px] flex flex-col gap-3">
+                    {ASSIST_CONVERSATION.map((m, i) => (
+                      <div
+                        key={i}
+                        className={`flex gap-2 items-end ${m.from === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        {m.from === "bot" && (
+                          <div className="w-6 h-6 bg-lime border border-ink rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Zap size={11} fill="currentColor" />
+                          </div>
+                        )}
+                        <div
+                          className="max-w-[78%] px-3.5 py-2.5 font-body text-[12.5px] leading-[1.5] border border-ink"
+                          style={{
+                            background: m.from === "user" ? "#1C1C18" : "#fff",
+                            color: m.from === "user" ? "#fff" : "#1C1C18",
+                            borderRadius:
+                              m.from === "user"
+                                ? "16px 16px 4px 16px"
+                                : "16px 16px 16px 4px",
+                          }}
+                        >
+                          {m.text}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex gap-2 mt-1">
+                      {["Show me the listing", "How to apply?", "More like this"].map((r) => (
+                        <span
+                          key={r}
+                          className="px-2.5 py-1.5 bg-white border border-ink rounded-xl font-body font-semibold text-[10px] cursor-pointer"
+                        >
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Composer */}
+                  <div className="px-4 py-3 bg-white border-t border-ink flex items-center gap-2.5">
+                    <div className="flex-1 px-3.5 py-2.5 bg-cream border border-ink rounded-xl font-body text-xs text-ink/45">
+                      Ask anything about ClimbHire…
+                    </div>
+                    <div className="w-9 h-9 bg-ink rounded-[10px] flex items-center justify-center text-lime">
+                      <ArrowUpRight size={15} strokeWidth={2.5} />
+                    </div>
+                  </div>
                 </div>
-                <h3 className="font-heading text-2xl font-bold text-forest-800 sm:text-3xl">
-                  Hire the best Caribbean talent.
-                </h3>
-                <p className="mt-3 text-gray-600 text-sm leading-relaxed">
-                  Post a job in minutes and reach thousands of vetted professionals across Trinidad & Tobago.
+              </PanelChrome>
+
+              {/* Right copy */}
+              <div>
+                <Eyebrow className="mb-4 block">§ 04 · ClimbHire Assist</Eyebrow>
+                <h2
+                  className="font-display font-semibold uppercase text-ink mb-7"
+                  style={{
+                    fontSize: "clamp(48px, 6.5vw, 92px)",
+                    letterSpacing: "-0.045em",
+                    lineHeight: 0.95,
+                  }}
+                >
+                  Your{" "}
+                  <Highlight color="#D4FF5E" delay={0}>
+                    AI
+                  </Highlight>
+                  <br />
+                  job
+                  <br />
+                  copilot.
+                </h2>
+                <p className="font-body font-medium text-lg leading-[1.55] text-ink/70 mb-8 max-w-[480px]">
+                  Meet <strong className="text-ink">ClimbHire Assist</strong> — our AI chatbot.
+                  Available on every page to help you navigate the platform, find roles that fit, and
+                  answer questions about how things work.
                 </p>
-                <Link href="/for-employers" className="btn-emerald mt-8 inline-flex">
-                  Post a Job
-                </Link>
+                <ul className="list-none p-0 m-0 flex flex-col gap-3.5 mb-9">
+                  {[
+                    ["Find roles faster", "Describe what you want; Assist surfaces matches."],
+                    ["Understand the platform", "How applications work, what employers see."],
+                    ["Get unstuck", "Resume tips, interview prep, salary context."],
+                    ["Available 24/7", "Always on, free for everyone."],
+                  ].map(([t, d]) => (
+                    <li key={t} className="flex gap-3.5 items-start">
+                      <div className="w-6 h-6 rounded-lg bg-lime border border-ink flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check size={13} strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <div className="font-display font-semibold text-[15px] uppercase tracking-[-0.02em] mb-0.5">
+                          {t}
+                        </div>
+                        <div className="font-body text-[13px] text-ink/60">{d}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-3 flex-wrap">
+                  <Button>Try Assist now</Button>
+                  <Button variant="ghost" href="/employers">For employers</Button>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── Testimonials ── */}
-        <section className="bg-white py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <p className="section-label">Success Stories</p>
-              <h2 className="font-heading mt-2 text-3xl font-bold text-forest-800 sm:text-4xl">
-                From the ClimbHire community
+        {/* ── FAQ ── */}
+        <section className="bg-white border-b border-ink px-7 py-[120px]">
+          <div className="max-w-[980px] mx-auto">
+            <div className="text-center mb-14">
+              <Eyebrow className="mb-3.5 block">§ 05 · How it works</Eyebrow>
+              <h2
+                className="font-display font-semibold uppercase text-ink m-0"
+                style={{
+                  fontSize: "clamp(48px, 6.5vw, 92px)",
+                  letterSpacing: "-0.045em",
+                  lineHeight: 0.95,
+                }}
+              >
+                Free. Simple.{" "}
+                <Highlight color="#D4FF5E" delay={0}>
+                  Caribbean.
+                </Highlight>
               </h2>
             </div>
-            <div className="mt-12 grid gap-6 md:grid-cols-3">
-              {testimonials.map((t) => (
-                <div key={t.id} className="card flex flex-col gap-4">
-                  <svg className="h-8 w-8 text-lime" viewBox="0 0 32 32" fill="currentColor">
-                    <path d="M10 8C6.686 8 4 10.686 4 14v2c0 3.314 2.686 6 6 6h.5a.5.5 0 010 1H10c-3.314 0-6 2.686-6 6v1h4v-1c0-1.105.895-2 2-2h.5C13.538 27 16 24.538 16 21.5v-7.5C16 10.686 13.314 8 10 8zm18 0c-3.314 0-6 2.686-6 6v2c0 3.314 2.686 6 6 6h.5a.5.5 0 010 1H28c-3.314 0-6 2.686-6 6v1h4v-1c0-1.105.895-2 2-2h.5C31.538 27 34 24.538 34 21.5v-7.5C34 10.686 31.314 8 28 8z" />
-                  </svg>
-                  <p className="text-gray-600 leading-relaxed flex-1">{t.quote}</p>
-                  <div className="flex items-center gap-3 border-t border-gray-50 pt-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest-800 text-lime font-heading font-bold text-sm">
-                      {t.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-forest-800">{t.name}</p>
-                      <p className="text-xs text-gray-500">{t.role} · {t.company}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <FAQ />
           </div>
         </section>
 
-        {/* ── Bottom CTA banner ── */}
-        <section className="bg-lime py-16">
-          <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
-            <h2 className="font-heading text-3xl font-bold text-forest-800 sm:text-4xl">
-              Ready to climb?
+        {/* ── Final CTA ── */}
+        <section className="bg-ink px-7 py-[120px] relative overflow-hidden">
+          <div
+            className="absolute -top-[100px] -right-[100px] w-[400px] h-[400px] bg-lime rounded-full opacity-10"
+            style={{ filter: "blur(80px)" }}
+          />
+          <div className="max-w-[1100px] mx-auto relative z-10 text-center">
+            <Eyebrow color="lime" className="mb-4 block">
+              § Make the climb
+            </Eyebrow>
+            <h2
+              className="font-display font-bold uppercase text-white mb-8"
+              style={{
+                fontSize: "clamp(64px, 9vw, 160px)",
+                letterSpacing: "-0.055em",
+                lineHeight: 0.9,
+              }}
+            >
+              Free for
+              <br />
+              everyone.{" "}
+              <span className="relative inline-block px-1.5">
+                Always.
+                <span
+                  className="absolute left-0 right-0 opacity-75"
+                  style={{
+                    bottom: "0.08em",
+                    height: "0.32em",
+                    background: "#D4FF5E",
+                    zIndex: -1,
+                  }}
+                />
+              </span>
             </h2>
-            <p className="mt-3 text-forest-700">
-              Join thousands of professionals and hundreds of companies on ClimbHire today.
+            <p className="font-body text-[19px] leading-[1.5] text-white/70 max-w-[640px] mx-auto mb-10">
+              Job seekers apply for free. Employers post up to 3 jobs for free. No subscriptions, no
+              paywalls — just Caribbean talent meeting Caribbean opportunity.
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link href="/jobs" className="btn-outline-dark bg-white">
-                Find Your Next Role
-              </Link>
-              <Link href="/for-employers" className="inline-flex items-center justify-center gap-2 rounded-lg bg-forest-800 px-6 py-3 text-sm font-semibold text-white hover:bg-forest-700 transition-colors">
-                Post a Job
-              </Link>
+            <div className="flex gap-3.5 justify-center flex-wrap">
+              <Button size="lg" variant="secondary" href="/jobs">Find a job</Button>
+              <Button size="lg" variant="white" href="/employers">Post a job (free)</Button>
             </div>
           </div>
         </section>
-
       </main>
       <Footer />
     </div>
+  );
+}
+
+function JobCard({ job }: { job: (typeof JOBS)[number] }) {
+  return (
+    <Link
+      href={`/jobs/${job.id}`}
+      className="block p-5 bg-white border border-ink rounded-[28px] relative cursor-pointer group transition-all duration-200 hover:-translate-y-0.5"
+      style={{ boxShadow: "3px 3px 0 0 #1C1C18" }}
+    >
+      <div className="flex gap-2 items-center mb-2.5">
+        <Eyebrow color="dim">{job.category}</Eyebrow>
+        <span className="w-[3px] h-[3px] bg-ink/25 rounded-full" />
+        <Eyebrow color="dim">Posted {job.posted}</Eyebrow>
+      </div>
+      <h4 className="font-display font-semibold text-[19px] uppercase tracking-[-0.028em] leading-[1.05] mb-2 pr-9">
+        {job.title}
+      </h4>
+      <p className="font-body text-xs text-ink/65 mb-3.5 flex items-center gap-1.5">
+        <span className="font-bold">{job.company}</span>
+        <span className="w-[3px] h-[3px] bg-ink/30 rounded-full" />
+        <span>{job.location}</span>
+      </p>
+      <div className="flex gap-1.5 mb-4 flex-wrap">
+        <Tag tone="cream" className="text-[9px] px-2.5 py-1">
+          {job.type}
+        </Tag>
+        <Tag tone="cream" className="text-[9px] px-2.5 py-1">
+          {job.level}
+        </Tag>
+        {job.remote && (
+          <Tag tone="tealfaint" className="text-[9px] px-2.5 py-1">
+            Remote
+          </Tag>
+        )}
+      </div>
+      <div className="flex justify-between items-center pt-3.5 border-t border-ink/8 mb-3.5">
+        <span className="font-body font-bold text-[11px] text-ink">{job.salary}</span>
+        <span className="font-body font-bold text-[10px] uppercase tracking-[0.1em] text-teal">
+          Closes {job.closing}
+        </span>
+      </div>
+      <div className="flex items-center justify-center gap-2 border border-ink rounded-squircle-sm px-3 py-2 text-[10px] font-body font-bold uppercase tracking-[0.1em] hover:scale-95 transition-transform">
+        View role <ArrowUpRight size={12} />
+      </div>
+    </Link>
   );
 }

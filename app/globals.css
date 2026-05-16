@@ -2,71 +2,175 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@500;600;700;800;900&family=Manrope:wght@400;500;700&family=Cedarville+Cursive&display=swap');
+
 @layer base {
   :root {
-    --font-playfair:   "Playfair Display", Georgia, serif;
-    --font-instrument: "Instrument Sans", system-ui, sans-serif;
+    --color-bg-cream: #EDEAE4;
+    --color-ink-black: #1C1C18;
+    --color-accent-lime: #D4FF5E;
+    --color-accent-teal: #70A4A4;
+    --color-white: #FFFFFF;
+
+    --ink-80: rgba(28, 28, 24, 0.80);
+    --ink-60: rgba(28, 28, 24, 0.60);
+    --ink-40: rgba(28, 28, 24, 0.40);
+    --ink-20: rgba(28, 28, 24, 0.20);
+    --ink-10: rgba(28, 28, 24, 0.10);
+    --ink-05: rgba(28, 28, 24, 0.05);
+
+    --font-display: var(--font-epilogue), system-ui, sans-serif;
+    --font-body: var(--font-manrope), system-ui, sans-serif;
+
+    --radius-sm: 1.25rem;
+    --radius-md: 2rem;
+    --radius-lg: 2.5rem;
+
+    --shadow-stamp-xs: 2px 2px 0 0 #1C1C18;
+    --shadow-stamp-sm: 4px 4px 0 0 #1C1C18;
+    --shadow-stamp-md: 8px 8px 0 0 #1C1C18;
+    --shadow-stamp-lg: 16px 16px 0 0 #1C1C18;
+    --shadow-stamp-lime: 16px 16px 0 0 #D4FF5E;
+    --shadow-stamp-lime-md: 8px 8px 0 0 #D4FF5E;
   }
 
   html {
     scroll-behavior: smooth;
   }
 
-  body {
-    @apply bg-white text-gray-800 antialiased;
-    font-family: var(--font-instrument);
+  html, body {
+    background: #EDEAE4;
+    color: #1C1C18;
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-playfair);
+    font-family: var(--font-epilogue), system-ui, sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    margin: 0;
   }
 }
 
 @layer components {
-  /* Primary = lime on forest */
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-lime px-6 py-3 text-sm font-semibold text-forest-800 shadow-sm transition-all hover:bg-lime-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime disabled:opacity-50 disabled:cursor-not-allowed;
+  .ch-hero {
+    font-family: var(--font-epilogue), system-ui, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    line-height: 1.05;
+    font-size: clamp(3rem, 10vw, 8rem);
   }
 
-  /* Secondary = outlined on dark */
-  .btn-outline-light {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white;
+  .ch-h1 {
+    font-family: var(--font-epilogue), system-ui, sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
   }
 
-  /* Secondary on light bg */
-  .btn-outline-dark {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-forest-800 px-6 py-3 text-sm font-semibold text-forest-800 transition-all hover:bg-forest-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest-800;
+  .ch-h2 {
+    font-family: var(--font-epilogue), system-ui, sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    font-size: clamp(2rem, 5vw, 3.75rem);
   }
 
-  .btn-emerald {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-emerald px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald;
+  .ch-h3 {
+    font-family: var(--font-epilogue), system-ui, sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    font-size: 2.25rem;
   }
 
-  .card {
-    @apply rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md;
+  .ch-h4 {
+    font-family: var(--font-epilogue), system-ui, sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    font-size: 1.5rem;
   }
 
-  .card-dark {
-    @apply rounded-2xl border border-white/10 bg-forest-700 p-6;
+  .ch-eyebrow {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(28, 28, 24, 0.4);
   }
 
-  .badge {
-    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium;
+  .ch-tag {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
 
-  .badge-lime {
-    @apply badge bg-lime/20 text-forest-800;
+  .ch-btn {
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
 
-  .badge-emerald {
-    @apply badge bg-emerald/20 text-emerald-700;
+  .ch-mono {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-weight: 400;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+  }
+}
+
+@layer utilities {
+  .ch-border {
+    border: 1px solid #1C1C18;
   }
 
-  .badge-gray {
-    @apply badge bg-gray-100 text-gray-600;
+  .ch-border-2 {
+    border: 2px solid #1C1C18;
   }
 
-  .section-label {
-    @apply text-xs font-semibold uppercase tracking-widest text-emerald;
+  .ch-squircle {
+    border-radius: 2.5rem;
   }
+
+  .ch-squircle-sm {
+    border-radius: 1.25rem;
+  }
+}
+
+@keyframes growWidth {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
