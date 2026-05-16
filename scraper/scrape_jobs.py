@@ -1,5 +1,5 @@
 """
-ClimbHire Caribbean — Google Jobs scraper via SerpAPI
+ClimbHire Caribbean — Google Jobs scraper via Serper.dev
 Pulls real Caribbean job listings and writes them into Supabase.
 
 Setup:
@@ -14,28 +14,29 @@ import time
 import re
 from supabase import create_client
 
-SERPAPI_KEY = "bb2bf9dbf29dc5c8a72bf9b7867164e35409c476"
+SERPER_KEY = "bb2bf9dbf29dc5c8a72bf9b7867164e35409c476"
 
 SUPABASE_URL = "https://lvvfclktjcghqxauohli.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dmZjbGt0amNnaHF4YXVvaGxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDkyNDksImV4cCI6MjA4OTYyNTI0OX0.NzmpYGJyAMw9_ucjp_nSJocBcN91Oj2hwQhC7zHGdR8"
 
+# (query, country_code) pairs — gl targets Google Jobs to that country
 QUERIES = [
-    "jobs in Trinidad and Tobago",
-    "jobs in Jamaica",
-    "jobs in Barbados",
-    "jobs in Guyana",
-    "jobs in Bahamas",
-    "jobs in Saint Lucia",
-    "jobs in Grenada",
-    "jobs in Antigua",
-    "remote jobs Caribbean",
-    "finance jobs Trinidad",
-    "tech jobs Trinidad",
-    "engineering jobs Trinidad",
-    "marketing jobs Jamaica",
-    "accounting jobs Barbados",
-    "healthcare jobs Trinidad",
-    "management jobs Caribbean",
+    ("jobs in Trinidad",        "tt"),
+    ("jobs in Jamaica",         "jm"),
+    ("jobs in Barbados",        "bb"),
+    ("jobs in Guyana",          "gy"),
+    ("jobs in Bahamas",         "bs"),
+    ("jobs in Saint Lucia",     "lc"),
+    ("jobs in Grenada",         "gd"),
+    ("jobs in Antigua",         "ag"),
+    ("remote jobs Caribbean",   "tt"),
+    ("finance jobs Trinidad",   "tt"),
+    ("tech jobs Trinidad",      "tt"),
+    ("engineering jobs Trinidad","tt"),
+    ("marketing jobs Jamaica",  "jm"),
+    ("accounting jobs Barbados","bb"),
+    ("healthcare jobs Trinidad","tt"),
+    ("management jobs Caribbean","tt"),
 ]
 
 INDUSTRY_MAP = {
@@ -59,6 +60,7 @@ INDUSTRY_MAP = {
     "energy": "Energy", "oil": "Energy", "gas": "Energy", "petroleum": "Energy",
 }
 
+
 def guess_industry(title: str) -> str:
     t = title.lower()
     for keyword, industry in INDUSTRY_MAP.items():
@@ -76,12 +78,13 @@ def guess_level(title: str, description: str = "") -> str:
     return "Mid-level"
 
 
-def parse_salary(job: dict) -> tuple[int, int, str, str]:
-    """Extract salary_min, salary_max, currency, period from SerpAPI job."""
-    detected = job.get("detected_extensions", {})
+def parse_salary(job: dict) -> tuple:
+    """Extract salary_min, salary_max, currency, period from a Serper job."""
+    salary_str = ""
+
+    detected = job.get("detectedExtensions", {})
     salary_str = detected.get("salary", "") or ""
 
-    # Try structured salary first
     if not salary_str:
         for ext in job.get("extensions", []):
             if any(c in ext for c in ["$", "€", "£", "TTD", "JMD", "BBD", "USD"]):
@@ -91,7 +94,6 @@ def parse_salary(job: dict) -> tuple[int, int, str, str]:
     if not salary_str:
         return 0, 0, "USD", "yearly"
 
-    # Detect currency
     currency = "USD"
     if "TTD" in salary_str:
         currency = "TTD"
@@ -104,7 +106,6 @@ def parse_salary(job: dict) -> tuple[int, int, str, str]:
     elif "XCD" in salary_str:
         currency = "XCD"
 
-    # Detect period
     period = "yearly"
     low = salary_str.lower()
     if any(w in low for w in ["month", "/mo", "per month"]):
@@ -112,7 +113,6 @@ def parse_salary(job: dict) -> tuple[int, int, str, str]:
     elif any(w in low for w in ["hour", "/hr", "per hour"]):
         period = "hourly"
 
-    # Extract numbers
     nums = re.findall(r"[\d,]+(?:\.\d+)?", salary_str.replace(",", ""))
     nums = [int(float(n)) for n in nums if n]
 
@@ -125,21 +125,20 @@ def parse_salary(job: dict) -> tuple[int, int, str, str]:
 
 
 def parse_work_mode(job: dict) -> str:
-    detected = job.get("detected_extensions", {})
-    schedule = (detected.get("work_from_home", False))
-    if schedule:
+    detected = job.get("detectedExtensions", {})
+    if detected.get("workFromHome", False):
         return "remote"
-    title_desc = (job.get("title", "") + job.get("description", "")).lower()
-    if "remote" in title_desc:
+    text = (job.get("title", "") + job.get("description", "")).lower()
+    if "remote" in text:
         return "remote"
-    if "hybrid" in title_desc:
+    if "hybrid" in text:
         return "hybrid"
     return "on-site"
 
 
 def parse_employment_type(job: dict) -> str:
-    detected = job.get("detected_extensions", {})
-    sched = (detected.get("schedule_type", "") or "").lower()
+    detected = job.get("detectedExtensions", {})
+    sched = (detected.get("scheduleType", "") or "").lower()
     if "part" in sched:
         return "part-time"
     if "contract" in sched:
@@ -150,14 +149,13 @@ def parse_employment_type(job: dict) -> str:
 
 
 def get_apply_url(job: dict) -> str:
-    options = job.get("apply_options", [])
-    if options:
-        return options[0].get("link", "")
-    return job.get("share_link", "")
+    links = job.get("relatedLinks", [])
+    if links:
+        return links[0].get("link", "")
+    return job.get("link", "")
 
 
-def extract_tags(title: str, description: str) -> list[str]:
-    """Pull likely skill tags from title and description."""
+def extract_tags(title: str, description: str) -> list:
     tag_keywords = [
         "Python", "Java", "SQL", "Excel", "Power BI", "Tableau", "Figma",
         "React", "JavaScript", "TypeScript", "AWS", "Azure", "GCP",
@@ -169,24 +167,20 @@ def extract_tags(title: str, description: str) -> list[str]:
     ]
     text = title + " " + (description[:500] if description else "")
     found = [t for t in tag_keywords if t.lower() in text.lower()]
-    # Always add the industry as a tag
     found.append(guess_industry(title))
-    return list(dict.fromkeys(found))[:8]  # dedupe, max 8
+    return list(dict.fromkeys(found))[:8]
 
 
-def get_or_create_company(supabase, company_name: str) -> str | None:
-    """Return company ID, creating the company if it doesn't exist."""
+def get_or_create_company(supabase, company_name: str):
     if not company_name:
         return None
 
     slug = re.sub(r"[^a-z0-9]+", "-", company_name.lower()).strip("-")
 
-    # Try to find existing
     result = supabase.table("companies").select("id").eq("slug", slug).execute()
     if result.data:
         return result.data[0]["id"]
 
-    # Create new
     new_co = supabase.table("companies").insert({
         "name": company_name,
         "slug": slug,
@@ -205,29 +199,29 @@ def job_exists(supabase, slug: str) -> bool:
     return bool(result.data)
 
 
-def scrape_query(query: str) -> list[dict]:
-    """Fetch jobs from SerpAPI for one query."""
-    params = {
-        "engine": "google_jobs",
-        "q": query,
-        "api_key": SERPAPI_KEY,
-        "hl": "en",
-        "num": 10,
-    }
-
+def scrape_query(query: str, gl: str) -> list:
+    """Fetch jobs from Serper.dev for one query."""
     try:
-        resp = requests.get("https://serpapi.com/search", params=params, timeout=30)
+        resp = requests.post(
+            "https://google.serper.dev/jobs",
+            headers={
+                "X-API-KEY": SERPER_KEY,
+                "Content-Type": "application/json",
+            },
+            json={"q": query, "gl": gl},
+            timeout=30,
+        )
         resp.raise_for_status()
         data = resp.json()
-        return data.get("jobs_results", [])
+        return data.get("jobs", [])
     except Exception as e:
-        print(f"  SerpAPI error for '{query}': {e}")
+        print(f"  Serper error for '{query}': {e}")
         return []
 
 
 def insert_job(supabase, job: dict, company_id: str) -> bool:
     title = job.get("title", "").strip()
-    company_name = job.get("company_name", "").strip()
+    company_name = job.get("companyName", "").strip()
     slug_base = re.sub(r"[^a-z0-9]+", "-", (title + "-" + company_name).lower()).strip("-")
     slug = slug_base[:80]
 
@@ -268,13 +262,13 @@ def main():
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     total_inserted = 0
 
-    for query in QUERIES:
-        print(f"\nScraping: '{query}'")
-        jobs = scrape_query(query)
+    for query, gl in QUERIES:
+        print(f"\nScraping: '{query}' (gl={gl})")
+        jobs = scrape_query(query, gl)
         print(f"  Found {len(jobs)} listings")
 
         for job in jobs:
-            company_name = job.get("company_name", "").strip()
+            company_name = job.get("companyName", "").strip()
             if not company_name:
                 continue
 
@@ -288,7 +282,6 @@ def main():
             if inserted:
                 total_inserted += 1
 
-        # Be polite — don't hammer SerpAPI
         time.sleep(1)
 
     print(f"\nDone. {total_inserted} new jobs added to Supabase.")
