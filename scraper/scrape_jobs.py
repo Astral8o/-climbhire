@@ -15,7 +15,7 @@ specific job post on LinkedIn, Indeed, company site, etc.
 
 import time
 import re
-from serpapi import GoogleSearch
+import serpapi
 from supabase import create_client
 
 SERPAPI_KEY = "7e87a01414569acc22b87528076335aff6f940c716a064212d879b5d5b9dea12"
@@ -216,16 +216,15 @@ def job_exists(supabase, slug: str) -> bool:
 def scrape_query(query: str, location: str, gl: str) -> list:
     """Fetch jobs from SerpAPI Google Jobs for one query."""
     try:
-        search = GoogleSearch({
-            "engine": "google_jobs",
-            "q": query,
-            "location": location,
-            "google_domain": "google.tt",
-            "hl": "en",
-            "gl": gl,
-            "api_key": SERPAPI_KEY,
-        })
-        results = search.get_dict()
+        client = serpapi.Client(api_key=SERPAPI_KEY)
+        results = client.search(
+            engine="google_jobs",
+            q=query,
+            location=location,
+            google_domain="google.tt",
+            hl="en",
+            gl=gl,
+        )
         return results.get("jobs_results", [])
     except Exception as e:
         print(f"  SerpAPI error for '{query}' in {location}: {e}")
