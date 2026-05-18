@@ -23,8 +23,10 @@ import {
 
 type JobDetail = {
   id: string;
+  company_id: string;
   title: string;
   company: string;
+  company_industry: string;
   location: string;
   type: string;
   level: string;
@@ -38,11 +40,15 @@ type JobDetail = {
   industry: string;
 };
 
+type RelatedJob = { id: string; title: string; location: string; employment_type: string | null };
+
 function dbToDetail(raw: DbJob): JobDetail {
   return {
     id: raw.id,
+    company_id: (raw as any).company_id ?? "",
     title: raw.title,
     company: raw.companies?.name ?? "Unknown",
+    company_industry: raw.companies?.industry ?? raw.industry ?? "General",
     location: raw.location,
     type: raw.employment_type ?? "full-time",
     level: "Mid-level",
@@ -61,6 +67,7 @@ export default function JobDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
+  const [relatedJobs, setRelatedJobs] = useState<RelatedJob[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,7 +81,18 @@ export default function JobDetailPage() {
           .eq("id", id)
           .single();
         if (!error && data) {
-          setJob(dbToDetail(data as unknown as DbJob));
+          const detail = dbToDetail(data as unknown as DbJob);
+          setJob(detail);
+          if (detail.company_id) {
+            const { data: related } = await supabase
+              .from("jobs")
+              .select("id, title, location, employment_type")
+              .eq("company_id", detail.company_id)
+              .eq("status", "published")
+              .neq("id", id)
+              .limit(3);
+            if (related) setRelatedJobs(related);
+          }
           setLoading(false);
           return;
         }
@@ -208,6 +226,33 @@ export default function JobDetailPage() {
             </div>
 
             <div className="flex flex-col gap-4">
+              {/* Company card */}
+              <div className="bg-white border border-ink rounded-squircle p-6" style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}>
+                <Eyebrow className="block mb-3">About the employer</Eyebrow>
+                <div className="font-display font-bold text-[18px] uppercase tracking-[-0.025em] mb-0.5">{job.company}</div>
+                <div className="font-body text-[12px] text-ink/55 mb-4">{job.company_industry}</div>
+                {relatedJobs.length > 0 && (
+                  <>
+                    <Eyebrow color="dim" className="block mb-2">More open roles</Eyebrow>
+                    <div className="flex flex-col gap-2">
+                      {relatedJobs.map((r) => (
+                        <Link
+                          key={r.id}
+                          href={`/jobs/${r.id}`}
+                          className="flex items-start gap-2 px-3 py-2.5 bg-cream border border-ink/20 rounded-[14px] hover:border-ink transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="font-display font-bold text-[12px] uppercase tracking-[-0.02em] leading-[1.2]">{r.title}</div>
+                            <div className="font-body text-[10px] text-ink/50 mt-0.5">{r.location} · {r.employment_type ?? "full-time"}</div>
+                          </div>
+                          <ArrowUpRight size={12} className="text-ink/40 flex-shrink-0 mt-0.5" />
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
               <div className="bg-white border border-ink rounded-squircle p-6" style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}>
                 <Eyebrow className="block mb-4">At a glance</Eyebrow>
                 <dl className="flex flex-col gap-4">

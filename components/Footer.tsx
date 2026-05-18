@@ -1,36 +1,34 @@
 import Link from "next/link";
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 const FOOTER_LINKS = [
   {
     title: "Platform",
     items: [
       { label: "Find Jobs", href: "/jobs" },
-      { label: "Companies", href: "/companies" },
-      { label: "FAQ", href: "/faq" },
+      { label: "For Employers", href: "/employers" },
     ],
   },
   {
     title: "Employers",
     items: [
-      { label: "For Employers", href: "/employers" },
-      { label: "Post a Job (Free)", href: "/employers/onboarding" },
-      { label: "Moderation Policy", href: "/employers" },
+      { label: "Post a Job", href: "/employers/onboarding" },
+      { label: "How it works", href: "/employers#how-it-works" },
+      { label: "Moderation policy", href: "/employers#moderation" },
     ],
   },
   {
     title: "Company",
     items: [
       { label: "About", href: "/" },
-      { label: "Contact", href: "/" },
-      { label: "Blog", href: "/" },
+      { label: "Contact", href: "mailto:hello@climbhire.cc" },
     ],
   },
   {
     title: "Support",
     items: [
-      { label: "Help Center", href: "/faq" },
       { label: "hello@climbhire.cc", href: "mailto:hello@climbhire.cc" },
+      { label: "employers@climbhire.cc", href: "mailto:employers@climbhire.cc" },
       { label: "Terms", href: "/" },
       { label: "Privacy", href: "/" },
     ],
@@ -45,7 +43,6 @@ export default function Footer() {
           className="grid gap-14 pb-14 border-b border-white/10"
           style={{ gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr" }}
         >
-          {/* Brand col */}
           <div>
             <div className="flex items-center gap-2.5 mb-5">
               <div className="w-[34px] h-[34px] bg-lime border border-white rounded-[10px] flex items-center justify-center text-ink">
@@ -56,7 +53,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-[260px] mb-6">
-              The Caribbean&apos;s free job board. Reimagining recruitment for the region.
+              Discover Caribbean jobs and click through to apply directly with the employer.
             </p>
             <div className="flex gap-2.5">
               {["tw", "ig", "in", "fb"].map((k) => (
@@ -72,7 +69,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
           {FOOTER_LINKS.map(({ title, items }) => (
             <div key={title}>
               <h4 className="font-display text-[10px] uppercase tracking-[0.22em] text-lime mb-5 font-bold">
@@ -94,7 +90,6 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom row */}
         <div className="flex justify-between items-center pt-7 font-body text-[11px] text-white/40">
           <span>© 2026 ClimbHire Caribbean. Port of Spain · Bridgetown · Kingston.</span>
           <span className="font-mono uppercase tracking-[0.22em] text-[10px]">

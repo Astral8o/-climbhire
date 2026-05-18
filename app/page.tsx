@@ -11,7 +11,6 @@ import Avatar from "@/components/ui/Avatar";
 import PanelChrome from "@/components/ui/PanelChrome";
 import HoverCard from "@/components/ui/HoverCard";
 import Button from "@/components/ui/Button";
-import FAQ from "@/components/FAQ";
 import { getSupabaseClient } from "@/lib/supabase";
 import {
   ArrowUpRight,
@@ -23,23 +22,35 @@ import {
   Share2,
   Zap,
   X,
-  Plus,
+  Mail,
 } from "lucide-react";
 
-type LiveJob = { id: string; title: string; company: string; location: string; type: string; salary: string; category: string; remote: boolean; posted: string; closing: string; };
-type LiveCompany = { id: string; name: string; industry: string; location: string; jobCount: number; initials: string; };
+type LiveJob = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  type: string;
+  salary: string;
+  category: string;
+  remote: boolean;
+};
 
-function initials(name: string) { return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(); }
+function initials(name: string) {
+  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
 const TRUST_NAMES = [
-  "Get Right Finance",
-  "MyGG",
-  "bmobile",
-  "Digicel",
-  "Massy Stores",
-  "Sagicor",
-  "Island Finance",
-  "Republic Bank",
+  "HALLIBURTON",
+  "Royal Bank of Canada",
+  "PTSC Trinidad",
+  "Agostini Limited",
+  "SuperPharm",
+  "Valaris",
+  "Eve Anderson",
+  "WellCorp",
 ];
+
 const ASSIST_CONVERSATION = [
   {
     from: "bot",
@@ -47,42 +58,100 @@ const ASSIST_CONVERSATION = [
   },
   {
     from: "user",
-    text: "Product design roles in Trinidad, remote-friendly.",
+    text: "Finance roles in Trinidad, ideally in banking.",
   },
   {
     from: "bot",
-    text: "Got it. I found 4 matches — the strongest is Senior UX Designer at Get Right Finance. Want me to show you the listing?",
+    text: "Found a few matches — strongest is Client Associate at Royal Bank of Canada. Want to view the listing?",
   },
   {
     from: "user",
-    text: "Yes, and what does the application process look like?",
+    text: "Yes — how do I apply?",
   },
   {
     from: "bot",
-    text: "Sign in to ClimbHire, hit Apply on the job, and your application is sent directly to the employer's inbox. ClimbHire doesn't store your resume — only the employer receives it.",
+    text: "Click 'View Role' on any listing and you'll go directly to the employer's application page. No account needed — just browse and apply straight from the source.",
   },
 ];
+
+function EmailSignup() {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email) return;
+    setState("loading");
+    try {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase.from("subscribers").insert({ email: email.trim().toLowerCase() });
+      if (error && error.code !== "23505") throw error;
+      setState("done");
+    } catch {
+      setState("error");
+    }
+  }
+
+  if (state === "done") {
+    return (
+      <div className="flex items-center gap-3 py-3">
+        <div className="w-8 h-8 bg-lime border border-ink rounded-[10px] flex items-center justify-center flex-shrink-0">
+          <Check size={14} strokeWidth={2.5} />
+        </div>
+        <span className="font-body font-bold text-sm text-ink">You're on the list. We'll be in touch.</span>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="flex gap-2">
+      <input
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="your@email.com"
+        className="flex-1 min-w-0 px-4 py-2.5 border border-ink rounded-[14px] font-body text-[13px] bg-white outline-none focus:ring-2 focus:ring-lime"
+      />
+      <button
+        type="submit"
+        disabled={state === "loading"}
+        className="px-4 py-2.5 bg-ink text-lime font-body font-bold text-[10px] uppercase tracking-[0.1em] rounded-[14px] hover:scale-95 transition-transform disabled:opacity-60"
+      >
+        {state === "loading" ? "…" : "Subscribe"}
+      </button>
+    </form>
+  );
+}
+
 export default function HomePage() {
   const [featuredJobs, setFeaturedJobs] = useState<LiveJob[]>([]);
-  const [companies, setCompanies] = useState<LiveCompany[]>([]);
-  const [totalJobs, setTotalJobs] = useState(50);
+  const [totalJobs, setTotalJobs] = useState(0);
 
   useEffect(() => {
     async function load() {
       const supabase = getSupabaseClient();
-      const [{ data: jobs }, { data: comps }, { count }] = await Promise.all([
-        supabase.from("jobs").select("id, title, location, industry, employment_type, work_mode, salary_min, salary_max, salary_currency, salary_period, published_at, expires_at, companies(name)").eq("status", "published").order("published_at", { ascending: false }).limit(4),
-        supabase.from("companies").select("id, name, industry, slug").limit(5),
+      const [{ data: jobs }, { count }] = await Promise.all([
+        supabase
+          .from("jobs")
+          .select("id, title, location, industry, employment_type, work_mode, salary_min, salary_max, salary_currency, salary_period, companies(name)")
+          .eq("status", "published")
+          .order("published_at", { ascending: false })
+          .limit(4),
         supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "published"),
       ]);
-      if (jobs) setFeaturedJobs(jobs.map((j: any) => ({
-        id: j.id, title: j.title, company: j.companies?.name ?? "Unknown",
-        location: j.location, type: j.employment_type ?? "full-time",
-        salary: j.salary_min ? `${j.salary_currency} ${(j.salary_min/1000).toFixed(0)}k–${(j.salary_max/1000).toFixed(0)}k/${j.salary_period === "monthly" ? "mo" : "yr"}` : "Competitive",
-        category: j.industry ?? "General", remote: j.work_mode === "remote" || j.work_mode === "hybrid",
-        posted: "recently", closing: "soon",
-      })));
-      if (comps) setCompanies(comps.map((c: any) => ({ id: c.id, name: c.name, industry: c.industry, location: "Caribbean", jobCount: 0, initials: initials(c.name) })));
+      if (jobs) {
+        setFeaturedJobs(jobs.map((j: any) => ({
+          id: j.id,
+          title: j.title,
+          company: j.companies?.name ?? "Unknown",
+          location: j.location,
+          type: j.employment_type ?? "full-time",
+          salary: j.salary_min ? `${j.salary_currency} ${(j.salary_min / 1000).toFixed(0)}k/${j.salary_period === "monthly" ? "mo" : "yr"}` : "Competitive",
+          category: j.industry ?? "General",
+          remote: j.work_mode === "remote" || j.work_mode === "hybrid",
+        })));
+      }
       if (count) setTotalJobs(count);
     }
     load();
@@ -92,70 +161,41 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1">
+
         {/* ── Hero ── */}
         <section className="bg-cream border-b border-ink px-7 pt-[84px] pb-[120px] relative overflow-hidden">
           <div className="max-w-[1360px] mx-auto grid gap-14 items-center" style={{ gridTemplateColumns: "1.15fr 1fr" }}>
-            {/* Left */}
             <div>
-              {/* Status pill */}
               <div className="inline-flex items-center gap-2.5 mb-8 px-3.5 py-2 bg-white border border-ink rounded-full">
-                <span
-                  className="w-[7px] h-[7px] rounded-full bg-lime"
-                  style={{ boxShadow: "0 0 0 3px rgba(212,255,94,0.3)" }}
-                />
-                <span className="font-body font-bold text-[10px] uppercase tracking-[0.22em]">
-                  Now live across the Caribbean
-                </span>
+                <span className="w-[7px] h-[7px] rounded-full bg-lime" style={{ boxShadow: "0 0 0 3px rgba(212,255,94,0.3)" }} />
+                <span className="font-body font-bold text-[10px] uppercase tracking-[0.22em]">Now live across the Caribbean</span>
               </div>
               <h1
                 className="font-display font-bold uppercase text-ink mb-9"
-                style={{
-                  fontSize: "clamp(56px, 9vw, 136px)",
-                  letterSpacing: "-0.05em",
-                  lineHeight: 0.94,
-                }}
+                style={{ fontSize: "clamp(56px, 9vw, 136px)", letterSpacing: "-0.05em", lineHeight: 0.94 }}
               >
                 <div>Grow here.</div>
                 <div>
-                  <Highlight color="#70A4A4" delay={0.9}>
-                    Hire here.
-                  </Highlight>
+                  <Highlight color="#70A4A4" delay={0.9}>Hire here.</Highlight>
                 </div>
               </h1>
               <p className="font-body font-medium text-xl leading-[1.45] max-w-[560px] mb-10 text-ink/75">
-                We{" "}
-                <Highlight color="#D4FF5E" delay={1.3}>
-                  illuminate
-                </Highlight>{" "}
-                opportunity. Connecting Caribbean job seekers to leading companies in the Caribbean &amp; beyond.
+                Discover real Caribbean jobs from verified employers. Browse, save, and click through to apply — all in one place, completely free.
               </p>
               <div className="flex gap-3.5 flex-wrap">
-                <Button size="lg" href="/jobs">Find your next job</Button>
-                <Button size="lg" variant="secondary" href="/employers">Hire with us</Button>
+                <Button size="lg" href="/jobs">Browse jobs</Button>
+                <Button size="lg" variant="secondary" href="/employers">Post a job</Button>
               </div>
             </div>
-            {/* Right — hero image */}
+
             <div className="relative aspect-[5/6] max-w-[520px] ml-auto w-full">
-              <div
-                className="absolute bg-lime rounded-[40px] opacity-35"
-                style={{ inset: "-20px -20px -20px 20px", transform: "rotate(-4deg)" }}
-              />
-              <div
-                className="absolute bg-teal rounded-[40px] opacity-25"
-                style={{ inset: "10px -30px -10px -10px", transform: "rotate(3deg)" }}
-              />
+              <div className="absolute bg-lime rounded-[40px] opacity-35" style={{ inset: "-20px -20px -20px 20px", transform: "rotate(-4deg)" }} />
+              <div className="absolute bg-teal rounded-[40px] opacity-25" style={{ inset: "10px -30px -10px -10px", transform: "rotate(3deg)" }} />
               <div
                 className="absolute inset-0 border border-ink rounded-[40px] overflow-hidden bg-[#ddd]"
                 style={{ boxShadow: "16px 16px 0 0 #1C1C18" }}
               >
-                <Image
-                  src="/hero-portrait.png"
-                  alt="Caribbean professional"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                {/* Hired toast */}
+                <Image src="/hero-portrait.png" alt="Caribbean professional" fill className="object-cover" priority />
                 <div
                   className="absolute left-5 bottom-5 bg-white border border-ink rounded-[20px] px-3.5 py-2.5 flex items-center gap-2.5"
                   style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
@@ -164,15 +204,10 @@ export default function HomePage() {
                     <Check size={14} />
                   </div>
                   <div>
-                    <div className="font-display font-bold text-xs uppercase tracking-[-0.02em]">
-                      Kalinda hired
-                    </div>
-                    <div className="font-body text-[10px] text-ink/60">
-                      Senior UX · Get Right Finance
-                    </div>
+                    <div className="font-display font-bold text-xs uppercase tracking-[-0.02em]">Kalinda hired</div>
+                    <div className="font-body text-[10px] text-ink/60">Senior UX · Get Right Finance</div>
                   </div>
                 </div>
-                {/* Verified badge */}
                 <div
                   className="absolute right-4 top-4 bg-ink text-lime border border-ink rounded-2xl px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em]"
                   style={{ boxShadow: "4px 4px 0 0 #D4FF5E" }}
@@ -183,31 +218,23 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
         {/* ── TrustBar ── */}
         <section className="bg-ink border-b border-ink py-7 overflow-hidden relative">
           <div className="absolute left-6 top-1/2 -translate-y-1/2 bg-ink pr-3.5 z-10 flex items-center gap-2.5">
-            <Eyebrow color="invert" className="text-[9px]">
-              Leading companies
-            </Eyebrow>
+            <Eyebrow color="invert" className="text-[9px]">Hiring teams</Eyebrow>
           </div>
-          <div
-            className="flex whitespace-nowrap pl-[200px]"
-            style={{ animation: "marquee 32s linear infinite" }}
-          >
+          <div className="flex whitespace-nowrap pl-[200px]" style={{ animation: "marquee 32s linear infinite" }}>
             {[0, 1, 2].map((i) => (
               <div key={i} className="flex items-center gap-14 pr-14">
                 {TRUST_NAMES.map((n) => (
-                  <span
-                    key={n + i}
-                    className="font-display text-[22px] uppercase tracking-[0.22em] font-semibold text-white/45"
-                  >
-                    {n}
-                  </span>
+                  <span key={n + i} className="font-display text-[22px] uppercase tracking-[0.22em] font-semibold text-white/45">{n}</span>
                 ))}
               </div>
             ))}
           </div>
         </section>
+
         {/* ── Featured Opportunities ── */}
         <section className="bg-cream border-b border-ink px-7 py-[108px]">
           <div className="max-w-[1360px] mx-auto">
@@ -216,54 +243,53 @@ export default function HomePage() {
                 <Eyebrow className="mb-4 block">§ 02 · Opportunities</Eyebrow>
                 <h2
                   className="font-display font-semibold uppercase text-ink m-0"
-                  style={{
-                    fontSize: "clamp(52px, 7vw, 108px)",
-                    letterSpacing: "-0.045em",
-                    lineHeight: 0.95,
-                  }}
+                  style={{ fontSize: "clamp(52px, 7vw, 108px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
                 >
-                  Featured <br />
-                  opportunities.
+                  Featured <br />opportunities.
                 </h2>
               </div>
-              <div className="flex flex-col items-end gap-4">
-                <Tag tone="ink">
-                  <span className="w-1.5 h-1.5 rounded-full bg-lime mr-0.5" />
-                  Updated daily
-                </Tag>
-              </div>
+              <Tag tone="ink">
+                <span className="w-1.5 h-1.5 rounded-full bg-lime mr-0.5" />
+                Updated daily
+              </Tag>
             </div>
+
             <div className="grid gap-10" style={{ gridTemplateColumns: "1fr 2fr" }}>
-              {/* Companies column */}
-              <div>
-                <Eyebrow color="dim" className="mb-4 block">
-                  Hiring teams
-                </Eyebrow>
-                <div className="flex flex-col gap-3.5 mb-5">
-                  {companies.map((c) => (
-                    <HoverCard key={c.id} shadowOn={false} className="p-4">
-                      <Link
-                        href={`/companies`}
-                        className="flex justify-between items-center"
-                      >
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <Avatar initials={c.initials} size={44} bg="#D4FF5E" color="#1C1C18" />
-                          <div className="min-w-0">
-                            <div className="font-display font-semibold text-[18px] uppercase tracking-[-0.03em] leading-none mb-1.5 truncate">
-                              {c.name}
-                            </div>
-                            <div className="font-body font-bold uppercase text-[9px] tracking-[0.18em] text-ink/45">
-                              {c.industry} · Caribbean
-                            </div>
-                          </div>
-                        </div>
-                        <ArrowUpRight size={17} />
-                      </Link>
-                    </HoverCard>
-                  ))}
+              {/* Email capture + stats */}
+              <div className="flex flex-col gap-4">
+                <div
+                  className="bg-ink text-white border border-ink rounded-squircle p-6"
+                  style={{ boxShadow: "4px 4px 0 0 #D4FF5E" }}
+                >
+                  <div className="w-9 h-9 bg-lime border border-white rounded-[10px] flex items-center justify-center mb-4 text-ink">
+                    <Mail size={16} />
+                  </div>
+                  <h3 className="font-display font-bold text-[20px] uppercase tracking-[-0.03em] text-white mb-2">
+                    New jobs in your inbox.
+                  </h3>
+                  <p className="font-body text-[13px] text-white/60 mb-5 leading-[1.5]">
+                    Get notified when new Caribbean roles go live. No spam, unsubscribe any time.
+                  </p>
+                  <EmailSignup />
                 </div>
-                <Button variant="outline" block href="/companies">Explore all companies</Button>
+
+                <div className="bg-white border border-ink rounded-squircle p-6" style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}>
+                  <Eyebrow color="dim" className="block mb-4">At a glance</Eyebrow>
+                  <div className="flex flex-col gap-3">
+                    {[
+                      [`${totalJobs || "—"}`, "active listings"],
+                      ["5", "Caribbean countries"],
+                      ["Human", "moderated, always"],
+                    ].map(([val, label]) => (
+                      <div key={label} className="flex items-baseline gap-2.5">
+                        <span className="font-display font-bold text-[28px] uppercase tracking-[-0.04em] leading-none">{val}</span>
+                        <span className="font-body text-[12px] text-ink/55">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
+
               {/* Jobs grid */}
               <div>
                 <Eyebrow color="dim" className="mb-4 block">
@@ -281,118 +307,81 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
         {/* ── Jobs Preview ── */}
         <section className="bg-white border-b border-ink px-7 py-[120px] relative overflow-hidden">
           <div className="max-w-[1360px] mx-auto">
             <div className="grid gap-16 items-center" style={{ gridTemplateColumns: "1fr 1.3fr" }}>
-              {/* Left copy */}
               <div>
                 <Eyebrow className="mb-4 block">§ 03 · For Job Seekers</Eyebrow>
                 <h2
                   className="font-display font-semibold uppercase text-ink mb-7"
-                  style={{
-                    fontSize: "clamp(48px, 6.5vw, 92px)",
-                    letterSpacing: "-0.045em",
-                    lineHeight: 0.95,
-                  }}
+                  style={{ fontSize: "clamp(48px, 6.5vw, 92px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
                 >
-                  Find your
-                  <br />
-                  next{" "}
-                  <Highlight color="#70A4A4" delay={0}>
-                    climb.
-                  </Highlight>
+                  Find your<br />next{" "}
+                  <Highlight color="#70A4A4" delay={0}>climb.</Highlight>
                 </h2>
                 <p className="font-body font-medium text-lg leading-[1.55] text-ink/70 mb-8 max-w-[480px]">
-                  Browse verified roles across the region — filter by island, type, level and
-                  category. Save what you love, share with a friend, and apply when you&apos;re ready.
+                  Browse verified roles across the region — filter by island, type and category. Save what you love, share with a friend, click through to apply.
                 </p>
                 <ul className="list-none p-0 m-0 flex flex-col gap-3.5 mb-9">
                   {[
-                    ["100% free, forever", "No fees, no paywalls."],
+                    ["100% free, forever", "No fees, no paywalls, no account required."],
                     ["Verified employers", "Every employer is reviewed before posting."],
                     ["Save & share jobs", "Bookmark roles or send to a friend."],
-                    ["Sign in to apply", "Applications go straight to the employer."],
+                    ["Apply directly", "Click through to the employer's own listing."],
                   ].map(([t, d]) => (
                     <li key={t} className="flex gap-3.5 items-start">
                       <div className="w-6 h-6 rounded-lg bg-lime border border-ink flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check size={13} strokeWidth={2.5} />
                       </div>
                       <div>
-                        <div className="font-display font-semibold text-[15px] uppercase tracking-[-0.02em] mb-0.5">
-                          {t}
-                        </div>
+                        <div className="font-display font-semibold text-[15px] uppercase tracking-[-0.02em] mb-0.5">{t}</div>
                         <div className="font-body text-[13px] text-ink/60">{d}</div>
                       </div>
                     </li>
                   ))}
                 </ul>
-                <div className="flex gap-3 flex-wrap">
-                  <Button href="/jobs">Browse all jobs</Button>
-                  <Button variant="ghost" href="/sign-up">Create free account</Button>
-                </div>
+                <Button href="/jobs">Browse all jobs</Button>
               </div>
-              {/* Right — PanelChrome */}
-              <PanelChrome
-                label="Find_Jobs::Live_Search"
-                status="Live"
-                statusColor="lime"
-                shadowClass="shadow-stamp-lime"
-              >
+
+              <PanelChrome label="Find_Jobs::Live_Search" status="Live" statusColor="lime" shadowClass="shadow-stamp-lime">
                 <div className="p-5 bg-cream">
-                  {/* Mock search bar */}
                   <div className="flex gap-2 mb-3.5">
                     <div className="flex-1 flex items-center gap-2.5 px-4 py-3 bg-white border border-ink rounded-2xl">
                       <Search size={14} />
-                      <span className="font-body text-[13px] font-semibold">Product designer</span>
+                      <span className="font-body text-[13px] font-semibold">Finance roles</span>
                       <span className="flex-1 border-l border-ink/20 ml-1.5 pl-2.5 font-body text-[13px] text-ink/50 flex items-center gap-1.5">
-                        <MapPin size={12} />
-                        Caribbean
+                        <MapPin size={12} />Caribbean
                       </span>
                     </div>
                     <div className="px-4 py-3 bg-ink text-white rounded-2xl flex items-center gap-1.5 font-body font-bold text-[11px] uppercase tracking-[0.1em]">
-                      <Filter size={12} />
-                      Filters · 2
+                      <Filter size={12} />Filters · 2
                     </div>
                   </div>
-                  {/* Filter chips */}
                   <div className="flex gap-1.5 flex-wrap mb-3.5">
-                    {["Full-time", "Remote-friendly", "Senior"].map((c) => (
-                      <span
-                        key={c}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-lime border border-ink rounded-xl font-body font-bold text-[10px] uppercase tracking-[0.1em]"
-                      >
+                    {["Full-time", "Port of Spain", "Banking"].map((c) => (
+                      <span key={c} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-lime border border-ink rounded-xl font-body font-bold text-[10px] uppercase tracking-[0.1em]">
                         {c} <X size={9} />
                       </span>
                     ))}
-                    <span className="inline-flex items-center px-2.5 py-1.5 border border-dashed border-ink rounded-xl font-body font-semibold text-[10px] uppercase tracking-[0.1em] text-ink/55">
-                      + Add filter
-                    </span>
                   </div>
                   <Eyebrow color="dim" className="block mb-2.5">
-                    4 of 38 results
+                    {featuredJobs.length} of {totalJobs} results
                   </Eyebrow>
-                  {/* Job rows */}
                   <div className="flex flex-col gap-2">
                     {featuredJobs.map((j, i) => (
-                      <div
-                        key={j.id}
-                        className="flex items-center gap-3 px-3.5 py-3 bg-white border border-ink rounded-2xl cursor-pointer"
-                      >
+                      <div key={j.id} className="flex items-center gap-3 px-3.5 py-3 bg-white border border-ink rounded-2xl cursor-pointer">
                         <Avatar initials={initials(j.company)} size={38} bg="#D4FF5E" color="#1C1C18" />
                         <div className="flex-1 min-w-0">
-                          <div className="font-display font-bold text-[13px] uppercase tracking-[-0.02em] leading-[1.15] mb-0.5">
-                            {j.title}
-                          </div>
+                          <div className="font-display font-bold text-[13px] uppercase tracking-[-0.02em] leading-[1.15] mb-0.5">{j.title}</div>
                           <div className="flex items-center gap-1.5 font-body text-[11px] text-ink/65">
                             <span className="text-teal font-bold">{j.company}</span>
                             <span className="opacity-40">·</span>
                             <span>{j.location}</span>
                           </div>
                         </div>
-                        <Tag tone={i === 0 ? "lime" : "cream"} className="text-[9px]">
-                          {j.category}
-                        </Tag>
+                        <Tag tone={i === 0 ? "lime" : "cream"} className="text-[9px]">{j.category}</Tag>
                         <Bookmark size={15} className="text-ink/40" />
                       </div>
                     ))}
@@ -401,10 +390,7 @@ export default function HomePage() {
                     <span className="flex items-center gap-1.5">
                       <Share2 size={11} /> Tap any job to view, save or share
                     </span>
-                    <Link
-                      href="/jobs"
-                      className="font-bold text-ink uppercase tracking-[0.1em] flex items-center gap-1"
-                    >
+                    <Link href="/jobs" className="font-bold text-ink uppercase tracking-[0.1em] flex items-center gap-1">
                       View all <ArrowUpRight size={11} />
                     </Link>
                   </div>
@@ -413,41 +399,29 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
         {/* ── Assist Showcase ── */}
         <section className="bg-cream border-b border-ink px-7 py-[120px] relative overflow-hidden">
           <div className="max-w-[1360px] mx-auto">
             <div className="grid gap-16 items-center" style={{ gridTemplateColumns: "1.3fr 1fr" }}>
-              {/* Left — PanelChrome */}
-              <PanelChrome
-                label="ClimbHire_Assist::v1.0"
-                status="Online"
-                statusColor="lime"
-                shadowClass="shadow-[16px_16px_0_0_#70A4A4]"
-              >
+              <PanelChrome label="ClimbHire_Assist::v1.0" status="Online" statusColor="lime" shadowClass="shadow-[16px_16px_0_0_#70A4A4]">
                 <div className="bg-white">
-                  {/* Chat header */}
                   <div className="px-4 py-3.5 bg-ink text-white flex items-center gap-3 border-b border-ink">
                     <div className="w-9 h-9 bg-lime border border-white rounded-[10px] flex items-center justify-center text-ink relative">
                       <Zap size={18} fill="currentColor" />
                       <div className="absolute -bottom-[3px] -right-[3px] w-3 h-3 bg-lime border-2 border-ink rounded-full" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-display font-bold text-sm uppercase tracking-[-0.02em]">
-                        ClimbHire Assist
-                      </div>
+                      <div className="font-display font-bold text-sm uppercase tracking-[-0.02em]">ClimbHire Assist</div>
                       <div className="font-body text-[10px] text-white/60 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 bg-lime rounded-full" /> AI · Online · Avg reply 1s
                       </div>
                     </div>
                     <X size={14} strokeWidth={2} className="text-white/60" />
                   </div>
-                  {/* Messages */}
                   <div className="p-5 bg-cream min-h-[340px] flex flex-col gap-3">
                     {ASSIST_CONVERSATION.map((m, i) => (
-                      <div
-                        key={i}
-                        className={`flex gap-2 items-end ${m.from === "user" ? "justify-end" : "justify-start"}`}
-                      >
+                      <div key={i} className={`flex gap-2 items-end ${m.from === "user" ? "justify-end" : "justify-start"}`}>
                         {m.from === "bot" && (
                           <div className="w-6 h-6 bg-lime border border-ink rounded-lg flex items-center justify-center flex-shrink-0">
                             <Zap size={11} fill="currentColor" />
@@ -458,10 +432,7 @@ export default function HomePage() {
                           style={{
                             background: m.from === "user" ? "#1C1C18" : "#fff",
                             color: m.from === "user" ? "#fff" : "#1C1C18",
-                            borderRadius:
-                              m.from === "user"
-                                ? "16px 16px 4px 16px"
-                                : "16px 16px 16px 4px",
+                            borderRadius: m.from === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                           }}
                         >
                           {m.text}
@@ -469,17 +440,11 @@ export default function HomePage() {
                       </div>
                     ))}
                     <div className="flex gap-2 mt-1">
-                      {["Show me the listing", "How to apply?", "More like this"].map((r) => (
-                        <span
-                          key={r}
-                          className="px-2.5 py-1.5 bg-white border border-ink rounded-xl font-body font-semibold text-[10px] cursor-pointer"
-                        >
-                          {r}
-                        </span>
+                      {["Show me the listing", "More like this", "Jobs in Jamaica"].map((r) => (
+                        <span key={r} className="px-2.5 py-1.5 bg-white border border-ink rounded-xl font-body font-semibold text-[10px] cursor-pointer">{r}</span>
                       ))}
                     </div>
                   </div>
-                  {/* Composer */}
                   <div className="px-4 py-3 bg-white border-t border-ink flex items-center gap-2.5">
                     <div className="flex-1 px-3.5 py-2.5 bg-cream border border-ink rounded-xl font-body text-xs text-ink/45">
                       Ask anything about ClimbHire…
@@ -490,36 +455,25 @@ export default function HomePage() {
                   </div>
                 </div>
               </PanelChrome>
-              {/* Right copy */}
+
               <div>
                 <Eyebrow className="mb-4 block">§ 04 · ClimbHire Assist</Eyebrow>
                 <h2
                   className="font-display font-semibold uppercase text-ink mb-7"
-                  style={{
-                    fontSize: "clamp(48px, 6.5vw, 92px)",
-                    letterSpacing: "-0.045em",
-                    lineHeight: 0.95,
-                  }}
+                  style={{ fontSize: "clamp(48px, 6.5vw, 92px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
                 >
                   Your{" "}
-                  <Highlight color="#D4FF5E" delay={0}>
-                    AI
-                  </Highlight>
-                  <br />
-                  job
-                  <br />
-                  copilot.
+                  <Highlight color="#D4FF5E" delay={0}>AI</Highlight>
+                  <br />job<br />copilot.
                 </h2>
                 <p className="font-body font-medium text-lg leading-[1.55] text-ink/70 mb-8 max-w-[480px]">
-                  Meet <strong className="text-ink">ClimbHire Assist</strong> — our AI chatbot.
-                  Available on every page to help you navigate the platform, find roles that fit, and
-                  answer questions about how things work.
+                  Meet <strong className="text-ink">ClimbHire Assist</strong> — our AI chatbot. Describe what you're looking for and Assist surfaces the best matches from our live listings.
                 </p>
                 <ul className="list-none p-0 m-0 flex flex-col gap-3.5 mb-9">
                   {[
                     ["Find roles faster", "Describe what you want; Assist surfaces matches."],
-                    ["Understand the platform", "How applications work, what employers see."],
-                    ["Get unstuck", "Resume tips, interview prep, salary context."],
+                    ["Filter by anything", "Island, salary, type, industry — just ask."],
+                    ["Get context", "Understand companies, roles, and salary norms."],
                     ["Available 24/7", "Always on, free for everyone."],
                   ].map(([t, d]) => (
                     <li key={t} className="flex gap-3.5 items-start">
@@ -527,9 +481,7 @@ export default function HomePage() {
                         <Check size={13} strokeWidth={2.5} />
                       </div>
                       <div>
-                        <div className="font-display font-semibold text-[15px] uppercase tracking-[-0.02em] mb-0.5">
-                          {t}
-                        </div>
+                        <div className="font-display font-semibold text-[15px] uppercase tracking-[-0.02em] mb-0.5">{t}</div>
                         <div className="font-body text-[13px] text-ink/60">{d}</div>
                       </div>
                     </li>
@@ -543,77 +495,59 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-        {/* ── FAQ ── */}
-        <section className="bg-white border-b border-ink px-7 py-[120px]">
-          <div className="max-w-[980px] mx-auto">
-            <div className="text-center mb-14">
-              <Eyebrow className="mb-3.5 block">§ 05 · How it works</Eyebrow>
-              <h2
-                className="font-display font-semibold uppercase text-ink m-0"
-                style={{
-                  fontSize: "clamp(48px, 6.5vw, 92px)",
-                  letterSpacing: "-0.045em",
-                  lineHeight: 0.95,
-                }}
-              >
-                Free. Simple.{" "}
-                <Highlight color="#D4FF5E" delay={0}>
-                  Caribbean.
-                </Highlight>
-              </h2>
+
+        {/* ── Email CTA strip ── */}
+        <section className="bg-white border-b border-ink px-7 py-[80px]">
+          <div className="max-w-[860px] mx-auto text-center">
+            <Eyebrow className="mb-3.5 block">§ 05 · Stay in the loop</Eyebrow>
+            <h2
+              className="font-display font-semibold uppercase text-ink mb-5"
+              style={{ fontSize: "clamp(40px, 5.5vw, 72px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
+            >
+              New Caribbean jobs,{" "}
+              <Highlight color="#D4FF5E" delay={0}>in your inbox.</Highlight>
+            </h2>
+            <p className="font-body font-medium text-[17px] leading-[1.55] text-ink/70 max-w-[520px] mx-auto mb-8">
+              We send a weekly digest of new listings across TT, Jamaica, Barbados, Guyana and beyond. Free, always.
+            </p>
+            <div className="max-w-[420px] mx-auto">
+              <EmailSignup />
             </div>
-            <FAQ />
           </div>
         </section>
+
         {/* ── Final CTA ── */}
         <section className="bg-ink px-7 py-[120px] relative overflow-hidden">
-          <div
-            className="absolute -top-[100px] -right-[100px] w-[400px] h-[400px] bg-lime rounded-full opacity-10"
-            style={{ filter: "blur(80px)" }}
-          />
+          <div className="absolute -top-[100px] -right-[100px] w-[400px] h-[400px] bg-lime rounded-full opacity-10" style={{ filter: "blur(80px)" }} />
           <div className="max-w-[1100px] mx-auto relative z-10 text-center">
-            <Eyebrow color="lime" className="mb-4 block">
-              § Make the climb
-            </Eyebrow>
+            <Eyebrow color="lime" className="mb-4 block">§ Make the climb</Eyebrow>
             <h2
               className="font-display font-bold uppercase text-white mb-8"
-              style={{
-                fontSize: "clamp(64px, 9vw, 160px)",
-                letterSpacing: "-0.055em",
-                lineHeight: 0.9,
-              }}
+              style={{ fontSize: "clamp(64px, 9vw, 160px)", letterSpacing: "-0.055em", lineHeight: 0.9 }}
             >
-              Free for
-              <br />
+              Free for<br />
               everyone.{" "}
               <span className="relative inline-block px-1.5">
                 Always.
-                <span
-                  className="absolute left-0 right-0 opacity-75"
-                  style={{
-                    bottom: "0.08em",
-                    height: "0.32em",
-                    background: "#D4FF5E",
-                    zIndex: -1,
-                  }}
-                />
+                <span className="absolute left-0 right-0 opacity-75" style={{ bottom: "0.08em", height: "0.32em", background: "#D4FF5E", zIndex: -1 }} />
               </span>
             </h2>
             <p className="font-body text-[19px] leading-[1.5] text-white/70 max-w-[640px] mx-auto mb-10">
-              Job seekers apply for free. Employers post up to 3 jobs for free. No subscriptions, no
-              paywalls — just Caribbean talent meeting Caribbean opportunity.
+              Job seekers browse and apply for free — no account needed. Employers list roles starting at $599 TTD. Caribbean talent meeting Caribbean opportunity.
             </p>
             <div className="flex gap-3.5 justify-center flex-wrap">
               <Button size="lg" variant="secondary" href="/jobs">Find a job</Button>
-              <Button size="lg" variant="white" href="/employers">Post a job (free)</Button>
+              <Button size="lg" variant="white" href="/employers/onboarding">Post a job</Button>
             </div>
           </div>
         </section>
+
       </main>
       <Footer />
     </div>
   );
 }
+
 function JobCard({ job }: { job: LiveJob }) {
   return (
     <Link
@@ -623,8 +557,6 @@ function JobCard({ job }: { job: LiveJob }) {
     >
       <div className="flex gap-2 items-center mb-2.5">
         <Eyebrow color="dim">{job.category}</Eyebrow>
-        <span className="w-[3px] h-[3px] bg-ink/25 rounded-full" />
-        <Eyebrow color="dim">Posted {job.posted}</Eyebrow>
       </div>
       <h4 className="font-display font-semibold text-[19px] uppercase tracking-[-0.028em] leading-[1.05] mb-2 pr-9">
         {job.title}
@@ -635,20 +567,8 @@ function JobCard({ job }: { job: LiveJob }) {
         <span>{job.location}</span>
       </p>
       <div className="flex gap-1.5 mb-4 flex-wrap">
-        <Tag tone="cream" className="text-[9px] px-2.5 py-1">
-          {job.type}
-        </Tag>
-        {job.remote && (
-          <Tag tone="tealfaint" className="text-[9px] px-2.5 py-1">
-            Remote
-          </Tag>
-        )}
-      </div>
-      <div className="flex justify-between items-center pt-3.5 border-t border-ink/8 mb-3.5">
-        <span className="font-body font-bold text-[11px] text-ink">{job.salary}</span>
-        <span className="font-body font-bold text-[10px] uppercase tracking-[0.1em] text-teal">
-          Closes {job.closing}
-        </span>
+        <Tag tone="cream" className="text-[9px] px-2.5 py-1">{job.type}</Tag>
+        {job.remote && <Tag tone="tealfaint" className="text-[9px] px-2.5 py-1">Remote</Tag>}
       </div>
       <div className="flex items-center justify-center gap-2 border border-ink rounded-squircle-sm px-3 py-2 text-[10px] font-body font-bold uppercase tracking-[0.1em] hover:scale-95 transition-transform">
         View role <ArrowUpRight size={12} />

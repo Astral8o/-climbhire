@@ -13,28 +13,28 @@ import { Check, Plus, Mail, AlertTriangle, X } from "lucide-react";
 
 const EMP_FAQS = [
   {
-    q: "Is it really free?",
-    a: "Yes. There are no listing fees, subscriptions, paid placements or commission on hires. ClimbHire is built as Caribbean public infrastructure for the regional job market.",
+    q: "How much does it cost?",
+    a: "$599 TTD per package — that gets you up to 3 active listings, reviewed by a human within 24 hours. For larger hiring teams that need unlimited listings, reach out to discuss an enterprise plan.",
   },
   {
-    q: "Why up to three active jobs?",
-    a: "A hard cap of three live roles per employer keeps the board high-signal for jobseekers and prevents listing spam. Need more for a hiring sprint? Email us and we'll review.",
+    q: "How do candidates apply?",
+    a: "Job seekers browse listings on ClimbHire and click 'View Role' to go directly to your own job post — on your careers page, LinkedIn, Indeed, or wherever you host it. ClimbHire is a discovery layer, not an ATS.",
   },
   {
     q: "How is moderation handled?",
-    a: "Every posting is reviewed by a human moderator within 24 hours. We check for legitimacy, clear scope, fair language and basic compensation transparency. Discriminatory or exploitative postings are rejected.",
+    a: "Every posting is reviewed by a human moderator within 24 hours. We check for legitimacy, clear scope, fair language and an honest job description. We'll contact you if anything needs a tweak before going live.",
   },
   {
-    q: "Where do applications go?",
-    a: "Applications are emailed directly to the address you provide on your employer profile. ClimbHire does not store resumes or applicant data — you own the conversation from first contact.",
+    q: "What if I need more than 3 listings?",
+    a: "Email us at employers@climbhire.cc to discuss an enterprise plan. We work with larger companies and recruitment agencies on custom arrangements.",
   },
   {
-    q: "How do I edit or close a posting?",
-    a: "Sign in to your employer account at any time to edit, pause, or close a role. Closed roles are removed from search within 5 minutes.",
+    q: "Can I edit or remove a listing?",
+    a: "Yes — email us at employers@climbhire.cc and we'll update or remove the listing within a few hours. A self-serve employer dashboard is coming soon.",
   },
   {
     q: "Do you support remote and diaspora hiring?",
-    a: "Yes. You can post local, regional, hybrid or fully remote roles. Many of our employers explicitly invite diaspora applicants — just tick the box on the posting.",
+    a: "Yes. You can list local, regional, hybrid or fully remote roles. Many employers on ClimbHire explicitly invite diaspora applicants — just note it in the job description.",
   },
 ];
 
@@ -56,23 +56,15 @@ function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
         </h4>
         <div
           className="w-[34px] h-[34px] rounded-xl border border-ink flex items-center justify-center flex-shrink-0 transition-all duration-200"
-          style={{
-            background: isOpen ? "#D4FF5E" : "#fff",
-            transform: isOpen ? "rotate(180deg)" : "rotate(0)",
-          }}
+          style={{ background: isOpen ? "#D4FF5E" : "#fff", transform: isOpen ? "rotate(180deg)" : "rotate(0)" }}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </div>
       </button>
-      <div
-        className="overflow-hidden transition-all duration-300"
-        style={{ maxHeight: isOpen ? 240 : 0 }}
-      >
-        <div className="px-6 pb-5 pr-[70px] font-body text-[14px] leading-[1.6] text-ink/75">
-          {a}
-        </div>
+      <div className="overflow-hidden transition-all duration-300" style={{ maxHeight: isOpen ? 240 : 0 }}>
+        <div className="px-6 pb-5 pr-[70px] font-body text-[14px] leading-[1.6] text-ink/75">{a}</div>
       </div>
     </div>
   );
@@ -99,50 +91,39 @@ export default function EmployersPage() {
                 <div>Reach the</div>
                 <div>
                   Caribbean.{" "}
-                  <Highlight color="#D4FF5E" delay={0}>
-                    Free.
-                  </Highlight>
+                  <Highlight color="#D4FF5E" delay={0}>Simply.</Highlight>
                 </div>
               </h1>
               <p className="font-body font-medium text-[19px] leading-[1.5] text-ink/70 max-w-[540px] mb-7">
-                Up to three live roles per employer. Reviewed by a human within 24 hours. Applications emailed straight to your team. No fees, no commission, no catch.
+                Up to 3 active listings for $599 TTD. Reviewed by a human within 24 hours. Candidates click directly through to your own job post. No ATS, no resume storage, no subscription.
               </p>
               <div className="flex gap-3 flex-wrap mb-7">
                 <Button size="lg" href="/employers/onboarding">Post a job</Button>
-                <Button size="lg" variant="outline" href="/sign-in">Employer sign in</Button>
+                <Button size="lg" variant="outline" href="mailto:employers@climbhire.cc">Enterprise enquiry</Button>
               </div>
               <div className="flex gap-4 flex-wrap font-body font-bold text-[11px] uppercase tracking-[0.12em] text-ink/55">
-                {["$0 forever", "Up to 3 live roles", "Human-moderated", "24h turnaround"].map((t) => (
+                {["$599 TTD / 3 roles", "Human-moderated", "24h turnaround", "Direct apply links"].map((t) => (
                   <span key={t} className="inline-flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-1 bg-lime border border-ink" style={{ borderRadius: 4 }} />
+                    <span className="w-2 h-2 bg-lime border border-ink" style={{ borderRadius: 4 }} />
                     {t}
                   </span>
                 ))}
               </div>
             </div>
 
-            <PanelChrome
-              label="Console::Post_a_Role"
-              status="Preview"
-              statusColor="lime"
-              shadowClass="shadow-stamp-md"
-            >
+            <PanelChrome label="Console::Post_a_Role" status="Preview" statusColor="lime" shadowClass="shadow-stamp-md">
               <div className="p-5 bg-white">
                 <div className="flex items-center gap-2.5 mb-4">
                   <Avatar initials="GR" size={36} bg="#1C1C18" color="#D4FF5E" />
                   <div className="flex-1">
-                    <div className="font-display font-bold text-[14px] uppercase tracking-[-0.02em]">
-                      Get Right Finance
-                    </div>
-                    <div className="font-body text-[11px] text-ink/55">
-                      Employer console · 2 of 3 slots used
-                    </div>
+                    <div className="font-display font-bold text-[14px] uppercase tracking-[-0.02em]">Get Right Finance</div>
+                    <div className="font-body text-[11px] text-ink/55">Employer listing · 2 of 3 slots used</div>
                   </div>
                   <Tag tone="lime" className="text-[9px]">● Verified</Tag>
                 </div>
-                <Eyebrow color="dim" className="block mb-2.5">Active postings</Eyebrow>
+                <Eyebrow color="dim" className="block mb-2.5">Active listings</Eyebrow>
                 {[
-                  ["Senior UX Designer", "Live · 86 applicants", "live"],
+                  ["Senior UX Designer", "Live · 12 days remaining", "live"],
                   ["Backend Engineer", "In review · posted 4h ago", "review"],
                 ].map(([t, s, k]) => (
                   <div key={t} className="flex items-center gap-2.5 px-3.5 py-3 bg-cream border border-ink rounded-2xl mb-2">
@@ -160,7 +141,7 @@ export default function EmployersPage() {
                     <Plus size={14} strokeWidth={2.5} />
                   </div>
                   <div className="flex-1">
-                    <div className="font-display font-bold text-[13px] uppercase">Open 3rd slot</div>
+                    <div className="font-display font-bold text-[13px] uppercase">Add 3rd role</div>
                     <div className="font-body text-[10px] text-ink/55">One slot remaining</div>
                   </div>
                 </div>
@@ -170,7 +151,7 @@ export default function EmployersPage() {
         </section>
 
         {/* ── How it works ── */}
-        <section className="px-7 py-[108px] bg-white border-b border-ink">
+        <section id="how-it-works" className="px-7 py-[108px] bg-white border-b border-ink">
           <div className="max-w-[1360px] mx-auto">
             <div className="text-center mb-16">
               <Eyebrow className="mb-3.5 block">§ How it works</Eyebrow>
@@ -179,37 +160,24 @@ export default function EmployersPage() {
                 style={{ fontSize: "clamp(44px, 6vw, 84px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
               >
                 Four steps.{" "}
-                <Highlight color="#70A4A4" delay={0}>
-                  No invoice.
-                </Highlight>
+                <Highlight color="#70A4A4" delay={0}>No fuss.</Highlight>
               </h2>
             </div>
             <div className="grid grid-cols-4 gap-4">
               {[
-                ["01", "Create a free account", "Verify your business email and add your company essentials. Takes about 2 minutes."],
-                ["02", "Draft your role", "Title, scope, salary band, location. Required salary transparency keeps the board honest."],
-                ["03", "Human review · 24h", "A regional moderator checks for clarity, legitimacy and fair scope. We message you if anything needs a tweak."],
-                ["04", "Applications by email", "When a candidate applies, their note and resume land in your inbox. We never see it."],
+                ["01", "Submit your details", "Fill in your company profile and add up to 3 job listings with direct apply links to your own site."],
+                ["02", "We review within 24h", "A regional moderator checks every listing for clarity, legitimacy and fair scope before it goes live."],
+                ["03", "Your roles go live", "Once approved, your listings appear on ClimbHire in front of Caribbean job seekers."],
+                ["04", "Candidates click through", "Interested candidates click 'View Role' and land directly on your own job post to apply."],
               ].map(([n, t, d]) => (
-                <div
-                  key={n}
-                  className="bg-cream border border-ink rounded-[28px] p-6"
-                  style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
-                >
+                <div key={n} className="bg-cream border border-ink rounded-[28px] p-6" style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}>
                   <div
                     className="font-display font-bold leading-[0.85] mb-4"
-                    style={{
-                      fontSize: 72,
-                      letterSpacing: "-0.06em",
-                      color: n === "03" ? "#D4FF5E" : "#1C1C18",
-                      textShadow: n === "03" ? "2px 2px 0 #1C1C18" : "none",
-                    }}
+                    style={{ fontSize: 72, letterSpacing: "-0.06em", color: n === "03" ? "#D4FF5E" : "#1C1C18", textShadow: n === "03" ? "2px 2px 0 #1C1C18" : "none" }}
                   >
                     {n}
                   </div>
-                  <h3 className="font-display font-bold text-[18px] uppercase tracking-[-0.025em] leading-[1.15] mb-2.5">
-                    {t}
-                  </h3>
+                  <h3 className="font-display font-bold text-[18px] uppercase tracking-[-0.025em] leading-[1.15] mb-2.5">{t}</h3>
                   <p className="font-body text-[13px] leading-[1.55] text-ink/70 m-0">{d}</p>
                 </div>
               ))}
@@ -218,7 +186,7 @@ export default function EmployersPage() {
         </section>
 
         {/* ── Moderation Policy ── */}
-        <section className="px-7 py-[108px] bg-cream border-b border-ink">
+        <section id="moderation" className="px-7 py-[108px] bg-cream border-b border-ink">
           <div className="max-w-[1360px] mx-auto grid gap-14 items-center" style={{ gridTemplateColumns: "1fr 1.1fr" }}>
             <div>
               <Eyebrow className="mb-3.5 block">§ Moderation policy</Eyebrow>
@@ -227,18 +195,16 @@ export default function EmployersPage() {
                 style={{ fontSize: "clamp(40px, 5vw, 72px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
               >
                 A board you can{" "}
-                <Highlight color="#D4FF5E" delay={0}>
-                  trust.
-                </Highlight>
+                <Highlight color="#D4FF5E" delay={0}>trust.</Highlight>
               </h2>
               <p className="font-body text-[17px] leading-[1.55] text-ink/70 mb-5 max-w-[520px]">
                 We keep the board high-signal so candidates stay engaged. Every posting is touched by a person.
               </p>
               <ul className="list-none p-0 m-0 flex flex-col gap-3.5">
                 {[
-                  ["Salary transparency required", 'Bands must be filled. No “competitive” or “DOE”.'],
                   ["Verified employer identity", "Real business email + light verification on first post."],
-                  ["Clear, fair scope", "We reject postings that bundle 3 roles into 1 salary."],
+                  ["Clear, honest scope", "We reject postings that bundle 3 roles into 1 salary."],
+                  ["Direct apply links required", "Each listing must link to the specific job post, not a generic careers page."],
                   ["No discrimination", "Postings that filter on protected characteristics are removed."],
                   ["Three live roles, hard cap", "Keeps employers focused and the board clean."],
                 ].map(([t, d]) => (
@@ -255,29 +221,22 @@ export default function EmployersPage() {
               </ul>
             </div>
 
-            <PanelChrome
-              label="Moderation::Review_Queue"
-              status="Reviewing"
-              statusColor="lime"
-              shadowClass="shadow-stamp-lime-md"
-            >
+            <PanelChrome label="Moderation::Review_Queue" status="Reviewing" statusColor="lime" shadowClass="shadow-stamp-lime-md">
               <div className="p-5 bg-white">
                 <div className="flex justify-between items-center mb-3.5">
-                  <Eyebrow color="dim">Today · 14 in queue</Eyebrow>
+                  <Eyebrow color="dim">Today · 8 in queue</Eyebrow>
                   <Tag tone="cream" className="text-[9px]">Avg 4h to live</Tag>
                 </div>
                 {[
                   ["Senior Designer · Digicel", "Approved · live in 12 min", "ok"],
-                  ["Sales Lead · Get Right Finance", "Needs salary band", "flag"],
+                  ["Sales Lead · Get Right Finance", "Needs direct apply URL", "flag"],
                   ["Backend Eng · MyGG", "Approved · live in 38 min", "ok"],
-                  ["Marketing Assistant · *redacted*", "Rejected · unverified employer", "no"],
+                  ["Marketing Asst · *redacted*", "Rejected · unverified employer", "no"],
                 ].map(([t, s, k]) => (
                   <div key={t} className="flex items-center gap-2.5 px-3.5 py-3 bg-cream border border-ink rounded-2xl mb-2">
                     <div
                       className="w-[30px] h-[30px] rounded-[10px] border border-ink flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: k === "ok" ? "#D4FF5E" : k === "flag" ? "#FFD466" : "#fff",
-                      }}
+                      style={{ background: k === "ok" ? "#D4FF5E" : k === "flag" ? "#FFD466" : "#fff" }}
                     >
                       {k === "ok" ? <Check size={13} strokeWidth={2.5} /> : k === "flag" ? <AlertTriangle size={13} /> : <X size={13} />}
                     </div>
@@ -298,51 +257,8 @@ export default function EmployersPage() {
           </div>
         </section>
 
-        {/* ── Why ClimbHire ── */}
-        <section className="px-7 py-[108px] bg-white border-b border-ink">
-          <div className="max-w-[1100px] mx-auto text-center">
-            <Eyebrow className="mb-3.5 block">§ Why ClimbHire</Eyebrow>
-            <h2
-              className="font-display font-bold uppercase text-ink mb-7"
-              style={{ fontSize: "clamp(44px, 6vw, 96px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
-            >
-              A board you can{" "}
-              <Highlight color="#D4FF5E" delay={0}>
-                stand behind.
-              </Highlight>
-            </h2>
-            <p className="font-body text-[19px] leading-[1.55] text-ink/75 max-w-[780px] mx-auto mb-5">
-              Your job postings deserve a home that takes them seriously. Every listing on ClimbHire is reviewed by a human, every employer is verified, and every candidate reaches you directly — no resume databases, no recycled applicants, no engagement traps.
-            </p>
-            <p className="font-body text-[16px] leading-[1.55] text-ink/60 max-w-[680px] mx-auto mb-10">
-              We&rsquo;ve built ClimbHire as{" "}
-              <strong className="text-ink">safe, reliable Caribbean hiring infrastructure</strong>{" "}
-              — so when you list a role here, you can trust that the platform is working with you, not against you.
-            </p>
-            <div className="grid grid-cols-3 gap-4 max-w-[920px] mx-auto">
-              {[
-                ["Trusted board", "Every employer is verified and every posting is moderated by a real person."],
-                ["Reliable reach", "Your roles surface to Caribbean talent across TT, JM, BB, LC, GY and diaspora."],
-                ["Real applicants", "Candidates apply with intent. No bots, no recycled resumes, no spam pipelines."],
-              ].map(([t, d]) => (
-                <div
-                  key={t}
-                  className="p-6 bg-cream border border-ink rounded-[24px] text-left"
-                  style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
-                >
-                  <div className="w-9 h-9 rounded-[11px] bg-lime border border-ink flex items-center justify-center mb-4">
-                    <Check size={16} strokeWidth={2.5} />
-                  </div>
-                  <h3 className="font-display font-bold text-[18px] uppercase tracking-[-0.025em] mb-2">{t}</h3>
-                  <p className="font-body text-[13.5px] leading-[1.55] text-ink/70 m-0">{d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── Employer FAQ ── */}
-        <section className="px-7 py-[108px] bg-cream border-b border-ink">
+        <section className="px-7 py-[108px] bg-white border-b border-ink">
           <div className="max-w-[1100px] mx-auto">
             <div className="text-center mb-12">
               <Eyebrow className="mb-3.5 block">§ Employer FAQ</Eyebrow>
@@ -350,9 +266,7 @@ export default function EmployersPage() {
                 className="font-display font-semibold uppercase text-ink m-0"
                 style={{ fontSize: "clamp(40px, 5.5vw, 76px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
               >
-                Frequently asked
-                <br />
-                questions.
+                Frequently asked<br />questions.
               </h2>
             </div>
             <div className="flex flex-col gap-3">
@@ -377,27 +291,21 @@ export default function EmployersPage() {
               className="font-display font-bold uppercase text-ink mb-5"
               style={{ fontSize: "clamp(40px, 5.5vw, 96px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
             >
-              Post your first
-              <br />
-              role.
+              Post your first<br />role.
             </h2>
             <p className="font-body text-[17px] text-ink/75 max-w-[580px] mx-auto mb-8">
-              It costs nothing. It takes about two minutes. A human reviewer reads it within a day.
+              $599 TTD for up to 3 listings. A human reviewer reads every post within 24 hours. Candidates click directly to your own job page.
             </p>
             <div className="flex justify-center gap-3.5 flex-wrap mb-8">
-              <Button size="lg" variant="secondary" href="/employers/onboarding">
-                Post a job (free)
-              </Button>
-              <Button size="lg" variant="white" href="/sign-in">
-                Employer sign in
-              </Button>
+              <Button size="lg" variant="secondary" href="/employers/onboarding">Post a job</Button>
+              <Button size="lg" variant="white" href="mailto:employers@climbhire.cc">Enterprise enquiry</Button>
             </div>
             <div
               className="inline-flex items-center gap-2.5 px-5 py-3 bg-white border border-ink rounded-[18px] font-mono text-[13px]"
               style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}
             >
               <Mail size={15} />
-              employers@climbhirecaribbean.com
+              employers@climbhire.cc
             </div>
           </div>
         </section>
