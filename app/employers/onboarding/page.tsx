@@ -98,7 +98,7 @@ function Step01() {
           </ul>
         </div>
 
-        <div className="p-6 bg-ink text-white border border-ink rounded-[24px]" style={{ boxShadow: "4px 4px 0 0 #D4FF5E" }}>
+        <div className="p-6 bg-ink text-white border border-ink rounded-[24px]" style={{ boxShadow: "4px 4px 0 0 #00C9B1" }}>
           <div className="font-display font-bold text-[48px] tracking-[-0.05em] leading-none mb-1 text-lime">∞</div>
           <div className="font-body text-[12px] text-white/50 mb-3">Reach out to discuss</div>
           <div className="font-display font-bold text-[16px] uppercase tracking-[-0.02em] mb-3 text-white">Enterprise</div>
@@ -362,8 +362,8 @@ export default function EmployerOnboardingPage() {
                 key={s.n}
                 className="flex items-center gap-2 px-4 py-2.5 border border-ink rounded-squircle-sm font-body font-bold text-[10px] uppercase tracking-[0.1em] transition-all"
                 style={{
-                  background: i === step ? "#D4FF5E" : i < step ? "#1C1C18" : "#fff",
-                  color: i < step ? "#D4FF5E" : "#1C1C18",
+                  background: i === step ? "#00C9B1" : i < step ? "#1C1C18" : "#fff",
+                  color: i < step ? "#00C9B1" : "#1C1C18",
                 }}
               >
                 <span>{s.n}</span>

@@ -210,7 +210,7 @@ export default function HomePage() {
                 </div>
                 <div
                   className="absolute right-4 top-4 bg-ink text-lime border border-ink rounded-2xl px-3 py-2 font-mono text-[10px] uppercase tracking-[0.22em]"
-                  style={{ boxShadow: "4px 4px 0 0 #D4FF5E" }}
+                  style={{ boxShadow: "4px 4px 0 0 #00C9B1" }}
                 >
                   Verified · Live
                 </div>
@@ -259,7 +259,7 @@ export default function HomePage() {
               <div className="flex flex-col gap-4">
                 <div
                   className="bg-ink text-white border border-ink rounded-squircle p-6"
-                  style={{ boxShadow: "4px 4px 0 0 #D4FF5E" }}
+                  style={{ boxShadow: "4px 4px 0 0 #00C9B1" }}
                 >
                   <div className="w-9 h-9 bg-lime border border-white rounded-[10px] flex items-center justify-center mb-4 text-ink">
                     <Mail size={16} />
@@ -372,7 +372,7 @@ export default function HomePage() {
                   <div className="flex flex-col gap-2">
                     {featuredJobs.map((j, i) => (
                       <div key={j.id} className="flex items-center gap-3 px-3.5 py-3 bg-white border border-ink rounded-2xl cursor-pointer">
-                        <Avatar initials={initials(j.company)} size={38} bg="#D4FF5E" color="#1C1C18" />
+                        <Avatar initials={initials(j.company)} size={38} bg="#00C9B1" color="#1C1C18" />
                         <div className="flex-1 min-w-0">
                           <div className="font-display font-bold text-[13px] uppercase tracking-[-0.02em] leading-[1.15] mb-0.5">{j.title}</div>
                           <div className="flex items-center gap-1.5 font-body text-[11px] text-ink/65">
@@ -463,7 +463,7 @@ export default function HomePage() {
                   style={{ fontSize: "clamp(48px, 6.5vw, 92px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
                 >
                   Your{" "}
-                  <Highlight color="#D4FF5E" delay={0}>AI</Highlight>
+                  <Highlight color="#00C9B1" delay={0}>AI</Highlight>
                   <br />job<br />copilot.
                 </h2>
                 <p className="font-body font-medium text-lg leading-[1.55] text-ink/70 mb-8 max-w-[480px]">
@@ -505,7 +505,7 @@ export default function HomePage() {
               style={{ fontSize: "clamp(40px, 5.5vw, 72px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
             >
               New Caribbean jobs,{" "}
-              <Highlight color="#D4FF5E" delay={0}>in your inbox.</Highlight>
+              <Highlight color="#00C9B1" delay={0}>in your inbox.</Highlight>
             </h2>
             <p className="font-body font-medium text-[17px] leading-[1.55] text-ink/70 max-w-[520px] mx-auto mb-8">
               We send a weekly digest of new listings across TT, Jamaica, Barbados, Guyana and beyond. Free, always.
@@ -529,7 +529,7 @@ export default function HomePage() {
               everyone.{" "}
               <span className="relative inline-block px-1.5">
                 Always.
-                <span className="absolute left-0 right-0 opacity-75" style={{ bottom: "0.08em", height: "0.32em", background: "#D4FF5E", zIndex: -1 }} />
+                <span className="absolute left-0 right-0 opacity-75" style={{ bottom: "0.08em", height: "0.32em", background: "#00C9B1", zIndex: -1 }} />
               </span>
             </h2>
             <p className="font-body text-[19px] leading-[1.5] text-white/70 max-w-[640px] mx-auto mb-10">

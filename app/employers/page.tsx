@@ -56,7 +56,7 @@ function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
         </h4>
         <div
           className="w-[34px] h-[34px] rounded-xl border border-ink flex items-center justify-center flex-shrink-0 transition-all duration-200"
-          style={{ background: isOpen ? "#D4FF5E" : "#fff", transform: isOpen ? "rotate(180deg)" : "rotate(0)" }}
+          style={{ background: isOpen ? "#00C9B1" : "#fff", transform: isOpen ? "rotate(180deg)" : "rotate(0)" }}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
@@ -91,7 +91,7 @@ export default function EmployersPage() {
                 <div>Reach the</div>
                 <div>
                   Caribbean.{" "}
-                  <Highlight color="#D4FF5E" delay={0}>Simply.</Highlight>
+                  <Highlight color="#00C9B1" delay={0}>Simply.</Highlight>
                 </div>
               </h1>
               <p className="font-body font-medium text-[19px] leading-[1.5] text-ink/70 max-w-[540px] mb-7">
@@ -114,7 +114,7 @@ export default function EmployersPage() {
             <PanelChrome label="Console::Post_a_Role" status="Preview" statusColor="lime" shadowClass="shadow-stamp-md">
               <div className="p-5 bg-white">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <Avatar initials="GR" size={36} bg="#1C1C18" color="#D4FF5E" />
+                  <Avatar initials="GR" size={36} bg="#1C1C18" color="#00C9B1" />
                   <div className="flex-1">
                     <div className="font-display font-bold text-[14px] uppercase tracking-[-0.02em]">Get Right Finance</div>
                     <div className="font-body text-[11px] text-ink/55">Employer listing · 2 of 3 slots used</div>
@@ -173,7 +173,7 @@ export default function EmployersPage() {
                 <div key={n} className="bg-cream border border-ink rounded-[28px] p-6" style={{ boxShadow: "4px 4px 0 0 #1C1C18" }}>
                   <div
                     className="font-display font-bold leading-[0.85] mb-4"
-                    style={{ fontSize: 72, letterSpacing: "-0.06em", color: n === "03" ? "#D4FF5E" : "#1C1C18", textShadow: n === "03" ? "2px 2px 0 #1C1C18" : "none" }}
+                    style={{ fontSize: 72, letterSpacing: "-0.06em", color: n === "03" ? "#00C9B1" : "#1C1C18", textShadow: n === "03" ? "2px 2px 0 #1C1C18" : "none" }}
                   >
                     {n}
                   </div>
@@ -195,7 +195,7 @@ export default function EmployersPage() {
                 style={{ fontSize: "clamp(40px, 5vw, 72px)", letterSpacing: "-0.045em", lineHeight: 0.95 }}
               >
                 A board you can{" "}
-                <Highlight color="#D4FF5E" delay={0}>trust.</Highlight>
+                <Highlight color="#00C9B1" delay={0}>trust.</Highlight>
               </h2>
               <p className="font-body text-[17px] leading-[1.55] text-ink/70 mb-5 max-w-[520px]">
                 We keep the board high-signal so candidates stay engaged. Every posting is touched by a person.
@@ -236,7 +236,7 @@ export default function EmployersPage() {
                   <div key={t} className="flex items-center gap-2.5 px-3.5 py-3 bg-cream border border-ink rounded-2xl mb-2">
                     <div
                       className="w-[30px] h-[30px] rounded-[10px] border border-ink flex items-center justify-center flex-shrink-0"
-                      style={{ background: k === "ok" ? "#D4FF5E" : k === "flag" ? "#FFD466" : "#fff" }}
+                      style={{ background: k === "ok" ? "#00C9B1" : k === "flag" ? "#FFD466" : "#fff" }}
                     >
                       {k === "ok" ? <Check size={13} strokeWidth={2.5} /> : k === "flag" ? <AlertTriangle size={13} /> : <X size={13} />}
                     </div>

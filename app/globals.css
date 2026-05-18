@@ -8,7 +8,7 @@
   :root {
     --color-bg-cream: #EDEAE4;
     --color-ink-black: #1C1C18;
-    --color-accent-lime: #D4FF5E;
+    --color-accent-lime: #00C9B1;
     --color-accent-teal: #70A4A4;
     --color-white: #FFFFFF;
 
@@ -30,8 +30,8 @@
     --shadow-stamp-sm: 4px 4px 0 0 #1C1C18;
     --shadow-stamp-md: 8px 8px 0 0 #1C1C18;
     --shadow-stamp-lg: 16px 16px 0 0 #1C1C18;
-    --shadow-stamp-lime: 16px 16px 0 0 #D4FF5E;
-    --shadow-stamp-lime-md: 8px 8px 0 0 #D4FF5E;
+    --shadow-stamp-lime: 16px 16px 0 0 #00C9B1;
+    --shadow-stamp-lime-md: 8px 8px 0 0 #00C9B1;
   }
 
   html {

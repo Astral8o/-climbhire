@@ -92,13 +92,13 @@ function FilterPills({
 function JobCard({ job, saved, onSave }: { job: Job; saved: boolean; onSave: () => void }) {
   return (
     <div
-      className="p-5 bg-white border border-ink rounded-[28px] relative cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#D4FF5E]"
+      className="p-5 bg-white border border-ink rounded-[28px] relative cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#00C9B1]"
       style={{ boxShadow: "3px 3px 0 0 #1C1C18" }}
     >
       <button
         onClick={(e) => { e.stopPropagation(); onSave(); }}
         className="absolute top-3.5 right-3.5 w-[34px] h-[34px] rounded-xl border border-ink flex items-center justify-center cursor-pointer transition-all duration-200"
-        style={{ background: saved ? "#D4FF5E" : "#fff", color: saved ? "#1C1C18" : "rgba(28,28,24,0.35)" }}
+        style={{ background: saved ? "#00C9B1" : "#fff", color: saved ? "#1C1C18" : "rgba(28,28,24,0.35)" }}
       >
         <Bookmark size={14} fill={saved ? "currentColor" : "none"} />
       </button>
@@ -208,7 +208,7 @@ export default function FindJobsPage() {
                   style={{ fontSize: "clamp(40px, 5.5vw, 76px)", letterSpacing: "-0.05em", lineHeight: 0.95 }}
                 >
                   {loading ? "Loading" : filtered.length} ways to{" "}
-                  <Highlight color="#D4FF5E" delay={0}>climb.</Highlight>
+                  <Highlight color="#00C9B1" delay={0}>climb.</Highlight>
                 </h1>
               </div>
 
@@ -251,7 +251,7 @@ export default function FindJobsPage() {
                     <span
                       onClick={() => setRemoteOnly(!remoteOnly)}
                       className="relative w-9 h-5 rounded-full border border-ink transition-all duration-200 flex-shrink-0 cursor-pointer"
-                      style={{ background: remoteOnly ? "#D4FF5E" : "#fff" }}
+                      style={{ background: remoteOnly ? "#00C9B1" : "#fff" }}
                     >
                       <span className="absolute top-0.5 w-3.5 h-3.5 rounded-full bg-ink transition-all duration-200" style={{ left: remoteOnly ? "18px" : "2px" }} />
                     </span>

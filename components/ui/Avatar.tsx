@@ -10,7 +10,7 @@ export default function Avatar({
   initials,
   size = 40,
   bg = "#1C1C18",
-  color = "#D4FF5E",
+  color = "#00C9B1",
   className = "",
 }: AvatarProps) {
   return (

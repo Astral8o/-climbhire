@@ -36,7 +36,7 @@ export default function HoverCard({
             : "translateY(-2px)"
           : "translateY(0)",
         boxShadow: hover && shadowOn
-          ? "8px 8px 0 0 #D4FF5E"
+          ? "8px 8px 0 0 #00C9B1"
           : shadowOn
           ? "4px 4px 0 0 #1C1C18"
           : "none",

@@ -18,7 +18,7 @@ export default function PanelChrome({
   className = "",
   shadowClass = "",
 }: PanelChromeProps) {
-  const dotColor = statusColor === "lime" ? "#D4FF5E" : "#70A4A4";
+  const dotColor = statusColor === "lime" ? "#00C9B1" : "#70A4A4";
   const dotGlow =
     statusColor === "lime"
       ? "0 0 0 2px rgba(212,255,94,0.25)"

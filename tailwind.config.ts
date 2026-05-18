@@ -11,7 +11,7 @@ const config: Config = {
       colors: {
         cream: "#EDEAE4",
         ink: "#1C1C18",
-        lime: "#D4FF5E",
+        lime: "#00C9B1",
         teal: "#70A4A4",
         "ink-80": "rgba(28,28,24,0.80)",
         "ink-60": "rgba(28,28,24,0.60)",
@@ -36,8 +36,8 @@ const config: Config = {
         "stamp-sm": "4px 4px 0 0 #1C1C18",
         "stamp-md": "8px 8px 0 0 #1C1C18",
         "stamp-lg": "16px 16px 0 0 #1C1C18",
-        "stamp-lime": "16px 16px 0 0 #D4FF5E",
-        "stamp-lime-md": "8px 8px 0 0 #D4FF5E",
+        "stamp-lime": "16px 16px 0 0 #00C9B1",
+        "stamp-lime-md": "8px 8px 0 0 #00C9B1",
         whisper: "12px 12px 0 0 rgba(28,28,24,0.03)",
       },
       keyframes: {

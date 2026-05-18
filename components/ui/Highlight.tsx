@@ -10,7 +10,7 @@ interface HighlightProps {
 
 export default function Highlight({
   children,
-  color = "#D4FF5E",
+  color = "#00C9B1",
   delay = 0.7,
 }: HighlightProps) {
   return (
