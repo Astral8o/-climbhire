@@ -1,3 +1,5 @@
+"use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
@@ -10,7 +12,7 @@ import PanelChrome from "@/components/ui/PanelChrome";
 import HoverCard from "@/components/ui/HoverCard";
 import Button from "@/components/ui/Button";
 import FAQ from "@/components/FAQ";
-import { COMPANIES, JOBS, FEATURED_JOB_IDS, getCompanyByName } from "@/lib/data";
+import { getSupabaseClient } from "@/lib/supabase";
 import {
   ArrowUpRight,
   Check,
@@ -23,7 +25,11 @@ import {
   X,
   Plus,
 } from "lucide-react";
-const FEATURED = FEATURED_JOB_IDS.map((id) => JOBS.find((j) => j.id === id)!).filter(Boolean);
+
+type LiveJob = { id: string; title: string; company: string; location: string; type: string; salary: string; category: string; remote: boolean; posted: string; closing: string; };
+type LiveCompany = { id: string; name: string; industry: string; location: string; jobCount: number; initials: string; };
+
+function initials(name: string) { return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(); }
 const TRUST_NAMES = [
   "Get Right Finance",
   "MyGG",
@@ -57,6 +63,31 @@ const ASSIST_CONVERSATION = [
   },
 ];
 export default function HomePage() {
+  const [featuredJobs, setFeaturedJobs] = useState<LiveJob[]>([]);
+  const [companies, setCompanies] = useState<LiveCompany[]>([]);
+  const [totalJobs, setTotalJobs] = useState(50);
+
+  useEffect(() => {
+    async function load() {
+      const supabase = getSupabaseClient();
+      const [{ data: jobs }, { data: comps }, { count }] = await Promise.all([
+        supabase.from("jobs").select("id, title, location, industry, employment_type, work_mode, salary_min, salary_max, salary_currency, salary_period, published_at, expires_at, companies(name)").eq("status", "published").order("published_at", { ascending: false }).limit(4),
+        supabase.from("companies").select("id, name, industry, slug").limit(5),
+        supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "published"),
+      ]);
+      if (jobs) setFeaturedJobs(jobs.map((j: any) => ({
+        id: j.id, title: j.title, company: j.companies?.name ?? "Unknown",
+        location: j.location, type: j.employment_type ?? "full-time",
+        salary: j.salary_min ? `${j.salary_currency} ${(j.salary_min/1000).toFixed(0)}k–${(j.salary_max/1000).toFixed(0)}k/${j.salary_period === "monthly" ? "mo" : "yr"}` : "Competitive",
+        category: j.industry ?? "General", remote: j.work_mode === "remote" || j.work_mode === "hybrid",
+        posted: "recently", closing: "soon",
+      })));
+      if (comps) setCompanies(comps.map((c: any) => ({ id: c.id, name: c.name, industry: c.industry, location: "Caribbean", jobCount: 0, initials: initials(c.name) })));
+      if (count) setTotalJobs(count);
+    }
+    load();
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -209,20 +240,20 @@ export default function HomePage() {
                   Hiring teams
                 </Eyebrow>
                 <div className="flex flex-col gap-3.5 mb-5">
-                  {COMPANIES.slice(0, 5).map((c) => (
+                  {companies.map((c) => (
                     <HoverCard key={c.id} shadowOn={false} className="p-4">
                       <Link
-                        href={`/companies/${c.id}`}
+                        href={`/companies`}
                         className="flex justify-between items-center"
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
-                          <Avatar initials={c.initials} size={44} bg={c.bg} color={c.color} />
+                          <Avatar initials={c.initials} size={44} bg="#D4FF5E" color="#1C1C18" />
                           <div className="min-w-0">
                             <div className="font-display font-semibold text-[18px] uppercase tracking-[-0.03em] leading-none mb-1.5 truncate">
                               {c.name}
                             </div>
                             <div className="font-body font-bold uppercase text-[9px] tracking-[0.18em] text-ink/45">
-                              {c.jobs} roles · {c.location.split(",")[1]?.trim() ?? c.location}
+                              {c.industry} · Caribbean
                             </div>
                           </div>
                         </div>
@@ -236,15 +267,15 @@ export default function HomePage() {
               {/* Jobs grid */}
               <div>
                 <Eyebrow color="dim" className="mb-4 block">
-                  Open positions · {FEATURED.length} featured
+                  Open positions · {featuredJobs.length} featured
                 </Eyebrow>
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  {FEATURED.map((job) => (
+                  {featuredJobs.map((job) => (
                     <JobCard key={job.id} job={job} />
                   ))}
                 </div>
                 <div className="flex justify-center">
-                  <Button variant="outline" href="/jobs">See all {JOBS.length} jobs</Button>
+                  <Button variant="outline" href="/jobs">See all {totalJobs} jobs</Button>
                 </div>
               </div>
             </div>
@@ -343,31 +374,28 @@ export default function HomePage() {
                   </Eyebrow>
                   {/* Job rows */}
                   <div className="flex flex-col gap-2">
-                    {JOBS.slice(0, 4).map((j, i) => {
-                      const comp = getCompanyByName(j.company);
-                      return (
-                        <div
-                          key={j.id}
-                          className="flex items-center gap-3 px-3.5 py-3 bg-white border border-ink rounded-2xl cursor-pointer"
-                        >
-                          <Avatar initials={comp.initials} size={38} bg={comp.bg} color={comp.color} />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-display font-bold text-[13px] uppercase tracking-[-0.02em] leading-[1.15] mb-0.5">
-                              {j.title}
-                            </div>
-                            <div className="flex items-center gap-1.5 font-body text-[11px] text-ink/65">
-                              <span className="text-teal font-bold">{j.company}</span>
-                              <span className="opacity-40">·</span>
-                              <span>{j.location}</span>
-                            </div>
+                    {featuredJobs.map((j, i) => (
+                      <div
+                        key={j.id}
+                        className="flex items-center gap-3 px-3.5 py-3 bg-white border border-ink rounded-2xl cursor-pointer"
+                      >
+                        <Avatar initials={initials(j.company)} size={38} bg="#D4FF5E" color="#1C1C18" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-display font-bold text-[13px] uppercase tracking-[-0.02em] leading-[1.15] mb-0.5">
+                            {j.title}
                           </div>
-                          <Tag tone={i === 0 ? "lime" : "cream"} className="text-[9px]">
-                            {j.category}
-                          </Tag>
-                          <Bookmark size={15} className="text-ink/40" />
+                          <div className="flex items-center gap-1.5 font-body text-[11px] text-ink/65">
+                            <span className="text-teal font-bold">{j.company}</span>
+                            <span className="opacity-40">·</span>
+                            <span>{j.location}</span>
+                          </div>
                         </div>
-                      );
-                    })}
+                        <Tag tone={i === 0 ? "lime" : "cream"} className="text-[9px]">
+                          {j.category}
+                        </Tag>
+                        <Bookmark size={15} className="text-ink/40" />
+                      </div>
+                    ))}
                   </div>
                   <div className="mt-3 flex justify-between items-center font-body text-[11px] text-ink/55">
                     <span className="flex items-center gap-1.5">
@@ -586,7 +614,7 @@ export default function HomePage() {
     </div>
   );
 }
-function JobCard({ job }: { job: (typeof JOBS)[number] }) {
+function JobCard({ job }: { job: LiveJob }) {
   return (
     <Link
       href={`/jobs/${job.id}`}
@@ -609,9 +637,6 @@ function JobCard({ job }: { job: (typeof JOBS)[number] }) {
       <div className="flex gap-1.5 mb-4 flex-wrap">
         <Tag tone="cream" className="text-[9px] px-2.5 py-1">
           {job.type}
-        </Tag>
-        <Tag tone="cream" className="text-[9px] px-2.5 py-1">
-          {job.level}
         </Tag>
         {job.remote && (
           <Tag tone="tealfaint" className="text-[9px] px-2.5 py-1">

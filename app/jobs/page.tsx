@@ -7,7 +7,6 @@ import Footer from "@/components/Footer";
 import Eyebrow from "@/components/ui/Eyebrow";
 import Highlight from "@/components/ui/Highlight";
 import Tag from "@/components/ui/Tag";
-import { JOBS } from "@/lib/data";
 import { getSupabaseClient, formatSalary, formatExpiry, formatPosted, type DbJob } from "@/lib/supabase";
 import {
   ArrowUpRight,
@@ -145,15 +144,8 @@ function JobCard({ job, saved, onSave }: { job: Job; saved: boolean; onSave: () 
   );
 }
 
-const FALLBACK_JOBS: Job[] = JOBS.map((j) => ({
-  ...j,
-  description: j.description ?? "",
-  apply_url: `/jobs/${j.id}`,
-  is_featured: false,
-}));
-
 export default function FindJobsPage() {
-  const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [activeTypes, setActiveTypes] = useState<string[]>([]);

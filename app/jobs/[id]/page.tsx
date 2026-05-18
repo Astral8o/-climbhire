@@ -8,7 +8,6 @@ import Footer from "@/components/Footer";
 import Eyebrow from "@/components/ui/Eyebrow";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
-import { JOBS, COMPANIES, getCompanyByName } from "@/lib/data";
 import { getSupabaseClient, formatSalary, formatExpiry, formatPosted, type DbJob } from "@/lib/supabase";
 import {
   ArrowUpRight,
@@ -81,16 +80,6 @@ export default function JobDetailPage() {
         }
       } catch {}
 
-      // Fall back to mock data
-      const mock = JOBS.find((j) => j.id === id);
-      if (mock) {
-        setJob({
-          ...mock,
-          description: mock.description ?? "",
-          apply_url: `/jobs/${mock.id}`,
-          industry: mock.category ?? "General",
-        });
-      }
       setLoading(false);
     }
     load();
@@ -123,7 +112,6 @@ export default function JobDetailPage() {
     );
   }
 
-  const mockCompany = (() => { try { return getCompanyByName(job.company); } catch { return null; } })();
   const descLines = job.description.split("\n\n");
 
   const applyHref = job.apply_url || null;
