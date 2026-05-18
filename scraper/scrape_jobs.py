@@ -18,7 +18,7 @@ import re
 from serpapi import GoogleSearch
 from supabase import create_client
 
-SERPAPI_KEY = "YOUR_SERPAPI_KEY_HERE"
+SERPAPI_KEY = "7e87a01414569acc22b87528076335aff6f940c716a064212d879b5d5b9dea12"
 
 SUPABASE_URL = "https://lvvfclktjcghqxauohli.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dmZjbGt0amNnaHF4YXVvaGxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNDkyNDksImV4cCI6MjA4OTYyNTI0OX0.NzmpYGJyAMw9_ucjp_nSJocBcN91Oj2hwQhC7zHGdR8"
